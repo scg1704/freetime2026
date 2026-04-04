@@ -29,7 +29,7 @@ export default function PaymentPage() {
           </h2>
           <button className="text-primary text-sm font-bold">Ver Todo</button>
         </div>
-        <div className="bg-gray-50 rounded-[32px] overflow-hidden border border-gray-100">
+        <div className="bg-gray-50 rounded-4xl overflow-hidden border border-gray-100">
           <TransactionItem
             title="Reparación de Grifo"
             date="Abr 2, 2026"

@@ -110,7 +110,7 @@ export default function TaskDetailsPage() {
         <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500">
           Publicado por
         </h2>
-        <div className="flex items-center justify-between p-6 bg-gray-50 rounded-[32px] border border-gray-100">
+        <div className="flex items-center justify-between p-6 bg-gray-50 rounded-4xl border border-gray-100">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-gray-200 rounded-2xl overflow-hidden">
               <img
@@ -137,7 +137,7 @@ export default function TaskDetailsPage() {
         </button>
         <button
           onClick={() => navigate(`/execution/${task.id}`)}
-          className="flex-[2] bg-primary text-white py-5 rounded-3xl font-bold text-lg shadow-xl shadow-primary/20 flex items-center justify-center gap-2 hover:opacity-90 transition-all"
+          className="flex-2 bg-primary text-white py-5 rounded-3xl font-bold text-lg shadow-xl shadow-primary/20 flex items-center justify-center gap-2 hover:opacity-90 transition-all"
         >
           Postularse Ahora <ArrowRight className="w-5 h-5" />
         </button>

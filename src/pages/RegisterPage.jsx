@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { User, Mail, Lock, Phone, MapPin, ArrowRight, CheckCircle2 } from 'lucide-react';
-import { cn } from '@/src/lib/utils.js';
+import { cn } from '@/src/lib/utils';
+import { useAuth } from '../context/AuthContext';
 
 export default function RegisterPage() {
   const [step, setStep] = useState(1);
@@ -16,9 +17,35 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const validateStep2 = () => {
+    if (!email.trim()) return 'El email es requerido.';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'El email no es válido.';
+    if (password.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
+    return null;
+  };
+
+  const validateStep3 = () => {
+    if (!name.trim()) return 'El nombre es requerido.';
+    if (!lastName.trim()) return 'El apellido es requerido.';
+    if (!phone.trim()) return 'El teléfono es requerido.';
+    if (!city.trim()) return 'La ciudad es requerida.';
+    return null;
+  };
+
+  const handleStep2 = () => {
+    const err = validateStep2();
+    if (err) { setError(err); return; }
+    setError('');
+    setStep(3);
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    const err = validateStep3();
+    if (err) { setError(err); return; }
+
     setError('');
     setLoading(true);
 
@@ -36,6 +63,7 @@ export default function RegisterPage() {
         return;
       }
 
+      login(data.user);
       navigate('/verification');
     } catch (err) {
       setError('Error de conexión. Intenta de nuevo.');
@@ -75,6 +103,7 @@ export default function RegisterPage() {
           </div>
         )}
 
+        {/* Step 1 — Rol */}
         {step === 1 && (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold text-center mb-8">
@@ -104,6 +133,7 @@ export default function RegisterPage() {
           </div>
         )}
 
+        {/* Step 2 — Cuenta */}
         {step === 2 && (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold text-center mb-8">
@@ -120,7 +150,7 @@ export default function RegisterPage() {
             <InputField
               icon={<Lock />}
               label="Contraseña"
-              placeholder="••••••••"
+              placeholder="Mínimo 8 caracteres"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -142,7 +172,7 @@ export default function RegisterPage() {
             </div>
             <button
               type="button"
-              onClick={() => setStep(3)}
+              onClick={handleStep2}
               className="w-full bg-black text-white py-4 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-2"
             >
               Siguiente <ArrowRight className="w-5 h-5" />
@@ -150,6 +180,7 @@ export default function RegisterPage() {
           </div>
         )}
 
+        {/* Step 3 — Info personal */}
         {step === 3 && (
           <form onSubmit={handleRegister} className="space-y-4">
             <h2 className="text-2xl font-bold text-center mb-8">
@@ -219,12 +250,7 @@ function RoleCard({ selected, onClick, title, description }) {
       )}
     >
       <div className="flex justify-between items-center mb-2">
-        <h3
-          className={cn(
-            'text-xl font-bold',
-            selected ? 'text-primary' : 'text-black'
-          )}
-        >
+        <h3 className={cn('text-xl font-bold', selected ? 'text-primary' : 'text-black')}>
           {title}
         </h3>
         {selected && <CheckCircle2 className="w-6 h-6 text-primary" />}
@@ -241,7 +267,7 @@ function InputField({ icon, label, ...props }) {
         {label}
       </label>
       <div className="relative">
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary w-5 h-5">
           {icon}
         </div>
         <input

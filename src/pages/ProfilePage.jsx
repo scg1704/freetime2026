@@ -108,7 +108,7 @@ export default function ProfilePage() {
 
 function BadgeItem({ label, color }) {
   return (
-    <div className="flex flex-col items-center gap-2 min-w-[80px]">
+    <div className="flex flex-col items-center gap-2 min-w-20">
       <div
         className={cn(
           'w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm',

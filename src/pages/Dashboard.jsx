@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Search, Plus, Clock, CheckCircle2, XCircle, AlertCircle, PlayCircle } from 'lucide-react';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
@@ -10,25 +10,29 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [nextTask, setNextTask] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) { setLoading(false); return; }
 
     const fetchTasks = async () => {
       try {
         const res = await fetch('/api/tasks/my-tasks', {
           headers: { Authorization: `Bearer ${user.token}` },
         });
+
+        if (!res.ok) throw new Error('API error');
+
         const data = await res.json();
-        if (res.ok) {
-          setTasks(data.tasks || []);
-          const active = data.tasks?.find(
-            (t) => t.status === 'ACTIVE' || t.status === 'PENDING'
-          );
-          setNextTask(active || null);
-        }
-      } catch (err) {
-        console.error('Error fetching tasks:', err);
+        setTasks(data.tasks || []);
+        const active = data.tasks?.find(
+          (t) => t.status === 'ACTIVE' || t.status === 'PENDING'
+        );
+        setNextTask(active || null);
+      } catch {
+        // API aún no disponible — muestra UI vacía sin romper la app
+        setApiError(true);
+        setTasks([]);
       } finally {
         setLoading(false);
       }
@@ -57,9 +61,13 @@ export default function Dashboard() {
     <div className="px-6 py-8 space-y-10">
       {/* Welcome Header */}
       <div className="space-y-1">
-        <h1 className="text-3xl font-bold tracking-tight">Hola, {user.name}</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Hola, {user.name} 👋
+        </h1>
         <p className="text-secondary font-medium">
-          Tienes {tasks.filter((t) => t.status === 'PENDING').length} tareas pendientes
+          {apiError
+            ? 'Conectando con el servidor...'
+            : `Tienes ${tasks.filter((t) => t.status === 'PENDING').length} tareas pendientes`}
         </p>
       </div>
 
@@ -69,7 +77,7 @@ export default function Dashboard() {
           Próxima Tarea
         </h2>
         {loading ? (
-          <div className="bg-gray-50 p-12 rounded-[40px] text-center">
+          <div className="bg-gray-50 p-12 rounded-[40px] text-center animate-pulse">
             <p className="text-secondary">Cargando...</p>
           </div>
         ) : nextTask ? (
@@ -114,7 +122,7 @@ export default function Dashboard() {
         )}
       </section>
 
-      {/* Summary */}
+      {/* Resumen */}
       <section className="space-y-6">
         <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500">
           Resumen
@@ -146,9 +154,7 @@ export default function Dashboard() {
       {/* FAB */}
       <section className="fixed bottom-24 right-6 z-40">
         <button
-          onClick={() =>
-            navigate(user.role === 'FREETIMER' ? '/tasks' : '/post-task')
-          }
+          onClick={() => navigate(user.role === 'FREETIMER' ? '/tasks' : '/post-task')}
           className="bg-black text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform active:scale-95"
         >
           {user.role === 'FREETIMER' ? (
@@ -159,34 +165,34 @@ export default function Dashboard() {
         </button>
       </section>
 
-      {/* Recent Activity */}
+      {/* Actividad reciente */}
       <section className="space-y-4">
         <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500">
           Actividad Reciente
         </h2>
-        <div className="space-y-4">
-          {tasks.length > 0 ? (
-            tasks.map((task) => (
+        {tasks.length > 0 ? (
+          <div className="space-y-4">
+            {tasks.map((task) => (
               <ActivityItem
                 key={task.id}
                 title={task.title}
-                user={
+                userName={
                   user.role === 'FREETIMER'
                     ? task.fulltimerName
                     : task.freetimerId
-                    ? 'FreeTimer'
+                    ? 'FreeTimer asignado'
                     : 'Sin asignar'
                 }
                 status={task.status}
                 price={`$${task.budget?.toLocaleString()}`}
               />
-            ))
-          ) : (
-            <p className="text-center text-secondary py-8">
-              No hay actividad reciente
-            </p>
-          )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-secondary py-8">
+            {apiError ? 'No se pudo cargar la actividad.' : 'No hay actividad reciente.'}
+          </p>
+        )}
       </section>
     </div>
   );
@@ -204,27 +210,25 @@ function StatusCard({ icon, label, count }) {
   );
 }
 
-function ActivityItem({ title, user, status, price }) {
+function ActivityItem({ title, userName, status, price }) {
   return (
     <div className="bg-white p-5 rounded-3xl border border-gray-100 flex items-center justify-between hover:border-primary/20 transition-colors">
       <div className="flex gap-4 items-center">
         <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
           <img
-            src={`https://picsum.photos/seed/${user}/100`}
-            alt={user}
+            src={`https://picsum.photos/seed/${userName}/100`}
+            alt={userName}
             referrerPolicy="no-referrer"
           />
         </div>
         <div>
           <h4 className="font-bold text-lg">{title}</h4>
           <p className="text-secondary text-sm">
-            {user} • {status}
+            {userName} • {status}
           </p>
         </div>
       </div>
-      <div className="text-right">
-        <div className="font-bold text-primary">{price}</div>
-      </div>
+      <div className="font-bold text-primary">{price}</div>
     </div>
   );
 }

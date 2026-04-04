@@ -34,7 +34,7 @@ export default function TaskExecutionPage() {
       <div className="relative h-64 bg-gray-200 rounded-[40px] overflow-hidden shadow-inner border-4 border-white">
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative">
-            <div className="w-12 h-12 bg-primary/20 rounded-full animate-ping absolute -inset-0" />
+            <div className="w-12 h-12 bg-primary/20 rounded-full animate-ping absolute inset-0" />
             <div className="w-12 h-12 bg-primary rounded-full border-4 border-white shadow-lg flex items-center justify-center relative z-10">
               <Navigation className="w-6 h-6 text-white" />
             </div>

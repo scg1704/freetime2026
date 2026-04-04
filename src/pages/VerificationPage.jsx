@@ -25,7 +25,7 @@ export default function VerificationPage() {
           >
             <div className="relative w-64 h-64 mx-auto bg-gray-100 rounded-full border-4 border-dashed border-primary/30 flex items-center justify-center overflow-hidden">
               <Camera className="w-12 h-12 text-primary opacity-50" />
-              <div className="absolute inset-0 border-[20px] border-white rounded-full" />
+              <div className="absolute inset-0 border-20 border-white rounded-full" />
             </div>
             <div className="space-y-4 text-center">
               <h3 className="text-xl font-bold">Captura de Selfie</h3>

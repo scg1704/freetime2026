@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -10,10 +10,16 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    if (!email.trim() || !password.trim()) {
+      setError('Por favor completa todos los campos.');
+      return;
+    }
+
     setError('');
     setLoading(true);
 
@@ -27,11 +33,11 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message || 'Email o contraseña incorrectos');
+        setError(data.message || 'Email o contraseña incorrectos.');
         return;
       }
 
-      setUser(data.user);
+      login(data.user);
       navigate('/home');
     } catch (err) {
       setError('Error de conexión. Intenta de nuevo.');
@@ -110,7 +116,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full bg-black text-white py-4 rounded-2xl font-bold text-lg hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            {loading ? 'Entrando...' : 'Entrar'}{' '}
+            {loading ? 'Entrando...' : 'Entrar'}
             <ArrowRight className="w-5 h-5" />
           </button>
         </form>

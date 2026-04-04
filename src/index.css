@@ -3,11 +3,21 @@
 @theme {
   --color-primary: #A64CEA;
   --color-secondary: #B3B3B3;
+  --color-background: #FFFFFF;
   --font-sans: "Poppins", "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
   body {
-    @apply bg-white text-black font-sans;
+    @apply bg-background text-black font-sans;
+  }
+
+  /* Ocultar scrollbar manteniendo funcionalidad */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }

@@ -20,8 +20,16 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
+      port: 5173,
       hmr: {
         overlay: false,
+      },
+      // Redirige llamadas /api al servidor Express en puerto 3001
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+        },
       },
     },
   };

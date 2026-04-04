@@ -1,17 +1,17 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './components/Layout.jsx';
-import LandingPage from './pages/LandingPage.jsx';
-import LoginPage from './pages/LoginPage.jsx';
-import RegisterPage from './pages/RegisterPage.jsx';
-import Dashboard from './pages/Dashboard.jsx';
-import TasksPage from './pages/TasksPage.jsx';
-import PaymentPage from './pages/PaymentPage.jsx';
-import ProfilePage from './pages/ProfilePage.jsx';
-import TaskExecutionPage from './pages/TaskExecutionPage.jsx';
-import TaskDetailsPage from './pages/TaskDetailsPage.jsx';
-import VerificationPage from './pages/VerificationPage.jsx';
-import PostTaskPage from './pages/PostTaskPage.jsx';
-import { AuthProvider } from './context/AuthContext.jsx';
+import Layout from './components/Layout';
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import Dashboard from './pages/Dashboard';
+import TasksPage from './pages/TasksPage';
+import PaymentPage from './pages/PaymentPage';
+import ProfilePage from './pages/ProfilePage';
+import TaskExecutionPage from './pages/TaskExecutionPage';
+import TaskDetailsPage from './pages/TaskDetailsPage';
+import VerificationPage from './pages/VerificationPage';
+import PostTaskPage from './pages/PostTaskPage';
+import { AuthProvider } from './context/AuthContext';
 
 export default function App() {
   return (
