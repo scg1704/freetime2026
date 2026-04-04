@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #A64CEA;
+  --color-secondary: #B3B3B3;
+  --font-sans: "Poppins", "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-white text-black font-sans;
+  }
+}

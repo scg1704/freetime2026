@@ -1,0 +1,8 @@
+{
+  "name": "FreeTime",
+  "description": "Plataforma digital que conecta FreeTimers (personas con tiempo y habilidades) con FullTimers (personas que necesitan ayuda en tareas específicas).",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
