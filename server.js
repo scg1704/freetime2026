@@ -3,6 +3,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
+// Rutas
+import authRoutes from './api/routes/auth.routes.js';
+import tasksRoutes from './api/routes/tasks.routes.js';
+import usersRoutes from './api/routes/users.routes.js';
+
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -11,30 +16,33 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// ---------------------------------------------------------------
+// Middlewares globales
+// ---------------------------------------------------------------
 app.use(express.json());
 
 // ---------------------------------------------------------------
-// Health check
+// Rutas API
 // ---------------------------------------------------------------
+app.use('/api/auth', authRoutes);
+app.use('/api/tasks', tasksRoutes);
+app.use('/api/users', usersRoutes);
+
+// Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'FreeTime API is running' });
 });
 
-// ---------------------------------------------------------------
 // Matching algorithm (spec 3.3.2)
-// Score = (Afinidad_Perfil * 0.50) + (Calificación_Promedio * 0.20) + (Proximidad_Geográfica * 0.30)
-// ---------------------------------------------------------------
 app.post('/api/match', (req, res) => {
   const { task, freetimer } = req.body;
-
   if (!task || !freetimer) {
     return res.status(400).json({ error: 'task and freetimer are required' });
   }
 
   const affinity =
-    task.skills && task.skills.length > 0
-      ? task.skills.filter((s) => freetimer.skills?.includes(s)).length /
-        task.skills.length
+    task.skills?.length > 0
+      ? task.skills.filter((s) => freetimer.skills?.includes(s)).length / task.skills.length
       : 0;
 
   const rating = (freetimer.rating ?? 0) / 5;
@@ -45,7 +53,7 @@ app.post('/api/match', (req, res) => {
 });
 
 // ---------------------------------------------------------------
-// Producción: servir el build de Vite
+// Producción: servir build de Vite
 // ---------------------------------------------------------------
 if (process.env.NODE_ENV === 'production') {
   const distPath = path.join(__dirname, 'dist');
@@ -55,6 +63,9 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+// ---------------------------------------------------------------
+// Iniciar servidor
+// ---------------------------------------------------------------
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 FreeTime API corriendo en http://localhost:${PORT}`);
 });

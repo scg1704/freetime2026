@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../shared/context/AuthContext';
+import InputField from '../../shared/components/ui/InputField';
+import Button from '../../shared/components/ui/Button';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -38,10 +40,12 @@ export default function LoginPage() {
       }
 
       login(data.user);
-      navigate('/home');
-    } catch (err) {
+
+      // Redirigir según rol
+      const role = data.user.role;
+      navigate(role === 'FREETIMER' ? '/freetimer/home' : '/fulltimer/home');
+    } catch {
       setError('Error de conexión. Intenta de nuevo.');
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -68,39 +72,24 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleLogin} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-bold uppercase tracking-wider text-gray-500">
-              Email
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-gray-50 border-2 border-transparent focus:border-primary rounded-2xl outline-none transition-all"
-                placeholder="tu@email.com"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-bold uppercase tracking-wider text-gray-500">
-              Contraseña
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-gray-50 border-2 border-transparent focus:border-primary rounded-2xl outline-none transition-all"
-                placeholder="••••••••"
-                required
-              />
-            </div>
-          </div>
+          <InputField
+            label="Email"
+            type="email"
+            placeholder="tu@email.com"
+            icon={<Mail />}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <InputField
+            label="Contraseña"
+            type="password"
+            placeholder="••••••••"
+            icon={<Lock />}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
 
           <div className="flex justify-end">
             <button
@@ -111,14 +100,9 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-black text-white py-4 rounded-2xl font-bold text-lg hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            {loading ? 'Entrando...' : 'Entrar'}
-            <ArrowRight className="w-5 h-5" />
-          </button>
+          <Button variant="secondary" size="lg" loading={loading} type="submit">
+            Entrar <ArrowRight className="w-5 h-5" />
+          </Button>
         </form>
 
         <p className="text-center mt-8 text-secondary">

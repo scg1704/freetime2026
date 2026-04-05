@@ -1,17 +1,30 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './components/Layout';
-import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import Dashboard from './pages/Dashboard';
-import TasksPage from './pages/TasksPage';
-import PaymentPage from './pages/PaymentPage';
-import ProfilePage from './pages/ProfilePage';
-import TaskExecutionPage from './pages/TaskExecutionPage';
-import TaskDetailsPage from './pages/TaskDetailsPage';
-import VerificationPage from './pages/VerificationPage';
-import PostTaskPage from './pages/PostTaskPage';
-import { AuthProvider } from './context/AuthContext';
+
+// Auth
+import LandingPage from './auth/pages/LandingPage';
+import LoginPage from './auth/pages/LoginPage';
+import RegisterPage from './auth/pages/RegisterPage';
+import VerificationPage from './auth/pages/VerificationPage';
+
+// Freetimer
+import FreetimerDashboard from './freetimer/pages/FreetimerDashboard';
+import FreetimerTasksPage from './freetimer/pages/TasksPage';
+import TaskDetailsPage from './freetimer/pages/TaskDetailsPage';
+import TaskExecutionPage from './freetimer/pages/TaskExecutionPage';
+import FreetimerPaymentPage from './freetimer/pages/PaymentPage';
+import FreetimerProfilePage from './freetimer/pages/ProfilePage';
+
+// Fulltimer
+import FulltimerDashboard from './fulltimer/pages/FulltimerDashboard';
+import PostTaskPage from './fulltimer/pages/PostTaskPage';
+import MyTasksPage from './fulltimer/pages/MyTasksPage';
+import ApplicantsPage from './fulltimer/pages/ApplicantsPage';
+import FulltimerPaymentPage from './fulltimer/pages/PaymentPage';
+import FulltimerProfilePage from './fulltimer/pages/ProfilePage';
+
+// Shared
+import Layout from './shared/components/Layout';
+import { AuthProvider } from './shared/context/AuthContext';
 
 export default function App() {
   return (
@@ -19,17 +32,29 @@ export default function App() {
       <Router>
         <Layout>
           <Routes>
+            {/* Auth */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/verification" element={<VerificationPage />} />
-            <Route path="/home" element={<Dashboard />} />
-            <Route path="/tasks" element={<TasksPage />} />
-            <Route path="/task/:taskId" element={<TaskDetailsPage />} />
-            <Route path="/post-task" element={<PostTaskPage />} />
-            <Route path="/payment" element={<PaymentPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/execution/:taskId" element={<TaskExecutionPage />} />
+
+            {/* Freetimer */}
+            <Route path="/freetimer/home" element={<FreetimerDashboard />} />
+            <Route path="/freetimer/tasks" element={<FreetimerTasksPage />} />
+            <Route path="/freetimer/task/:taskId" element={<TaskDetailsPage />} />
+            <Route path="/freetimer/execution/:taskId" element={<TaskExecutionPage />} />
+            <Route path="/freetimer/payment" element={<FreetimerPaymentPage />} />
+            <Route path="/freetimer/profile" element={<FreetimerProfilePage />} />
+
+            {/* Fulltimer */}
+            <Route path="/fulltimer/home" element={<FulltimerDashboard />} />
+            <Route path="/fulltimer/post-task" element={<PostTaskPage />} />
+            <Route path="/fulltimer/my-tasks" element={<MyTasksPage />} />
+            <Route path="/fulltimer/task/:taskId/applicants" element={<ApplicantsPage />} />
+            <Route path="/fulltimer/payment" element={<FulltimerPaymentPage />} />
+            <Route path="/fulltimer/profile" element={<FulltimerProfilePage />} />
+
+            {/* Fallback */}
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Layout>

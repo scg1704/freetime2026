@@ -12,12 +12,13 @@
     @apply bg-background text-black font-sans;
   }
 
-  /* Ocultar scrollbar manteniendo funcionalidad */
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  /* Scroll funciona pero la barra es invisible */
+  * {
+    scrollbar-width: none;      /* Firefox */
+    -ms-overflow-style: none;   /* IE / Edge */
   }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+
+  *::-webkit-scrollbar {
+    display: none;              /* Chrome / Safari */
   }
 }

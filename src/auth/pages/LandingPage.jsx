@@ -5,7 +5,7 @@ import { ArrowRight, Clock, Shield, TrendingUp } from 'lucide-react';
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white text-black font-sans overflow-x-hidden">
-      {/* Hero Section */}
+      {/* Hero */}
       <section className="relative h-screen flex flex-col items-center justify-center px-6 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -25,7 +25,7 @@ export default function LandingPage() {
               to="/register"
               className="bg-primary text-white px-10 py-4 rounded-full font-bold text-lg hover:opacity-90 transition-all flex items-center justify-center gap-2"
             >
-              Get Started <ArrowRight className="w-5 h-5" />
+              Comenzar <ArrowRight className="w-5 h-5" />
             </Link>
             <Link
               to="/login"

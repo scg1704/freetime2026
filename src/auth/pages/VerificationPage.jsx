@@ -1,9 +1,19 @@
 import { useState } from 'react';
 import { Camera, Shield, CheckCircle, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../shared/context/AuthContext';
+import Button from '../../shared/components/ui/Button';
 
 export default function VerificationPage() {
   const [step, setStep] = useState(1);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleContinue = () => {
+    if (!user) { navigate('/login'); return; }
+    navigate(user.role === 'FREETIMER' ? '/freetimer/home' : '/fulltimer/home');
+  };
 
   return (
     <div className="px-6 py-12 flex flex-col items-center justify-center min-h-screen bg-white">
@@ -25,7 +35,7 @@ export default function VerificationPage() {
           >
             <div className="relative w-64 h-64 mx-auto bg-gray-100 rounded-full border-4 border-dashed border-primary/30 flex items-center justify-center overflow-hidden">
               <Camera className="w-12 h-12 text-primary opacity-50" />
-              <div className="absolute inset-0 border-20 border-white rounded-full" />
+              <div className="absolute inset-0 border-[20px] border-white rounded-full" />
             </div>
             <div className="space-y-4 text-center">
               <h3 className="text-xl font-bold">Captura de Selfie</h3>
@@ -34,12 +44,9 @@ export default function VerificationPage() {
                 que cubran tu rostro.
               </p>
             </div>
-            <button
-              onClick={() => setStep(2)}
-              className="w-full bg-primary text-white py-5 rounded-3xl font-bold text-lg shadow-lg shadow-primary/20"
-            >
+            <Button variant="primary" size="lg" onClick={() => setStep(2)}>
               Tomar Foto
-            </button>
+            </Button>
           </motion.div>
         )}
 
@@ -65,23 +72,16 @@ export default function VerificationPage() {
             <div className="bg-gray-50 p-6 rounded-3xl space-y-4">
               <div className="flex items-center gap-3">
                 <Shield className="w-5 h-5 text-primary" />
-                <span className="text-sm font-bold">
-                  Validación Anti-Spoofing: OK
-                </span>
+                <span className="text-sm font-bold">Validación Anti-Spoofing: OK</span>
               </div>
               <div className="flex items-center gap-3">
                 <Shield className="w-5 h-5 text-primary" />
-                <span className="text-sm font-bold">
-                  Análisis de Liveness: OK
-                </span>
+                <span className="text-sm font-bold">Análisis de Liveness: OK</span>
               </div>
             </div>
-            <button
-              onClick={() => (window.location.href = '/home')}
-              className="w-full bg-black text-white py-5 rounded-3xl font-bold text-lg flex items-center justify-center gap-2"
-            >
+            <Button variant="secondary" size="lg" onClick={handleContinue}>
               Continuar al Dashboard <ArrowRight className="w-5 h-5" />
-            </button>
+            </Button>
           </motion.div>
         )}
       </div>

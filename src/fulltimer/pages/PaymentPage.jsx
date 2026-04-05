@@ -1,15 +1,15 @@
 import { CreditCard, AlertTriangle, Plus, ChevronRight } from 'lucide-react';
 
-export default function PaymentPage() {
+export default function FulltimerPaymentPage() {
   return (
     <div className="px-6 py-8 space-y-10">
-      <h1 className="text-4xl font-bold tracking-tighter">Pagos</h1>
+      <h1 className="text-4xl font-bold tracking-tighter">Mis Pagos</h1>
 
       {/* Métodos de pago */}
       <section className="space-y-4">
         <div className="flex justify-between items-center px-1">
           <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500">
-            Mis Métodos
+            Métodos de pago
           </h2>
           <button className="text-primary text-sm font-bold flex items-center gap-1">
             <Plus className="w-4 h-4" /> Añadir
@@ -25,29 +25,14 @@ export default function PaymentPage() {
       <section className="space-y-4">
         <div className="flex justify-between items-center px-1">
           <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500">
-            Historial de Recibos
+            Historial de Pagos
           </h2>
           <button className="text-primary text-sm font-bold">Ver Todo</button>
         </div>
-        <div className="bg-gray-50 rounded-4xl overflow-hidden border border-gray-100">
-          <TransactionItem
-            title="Reparación de Grifo"
-            date="Abr 2, 2026"
-            amount="+$40.500"
-            status="Completado"
-          />
-          <TransactionItem
-            title="Limpieza Apartamento"
-            date="Mar 28, 2026"
-            amount="+$72.000"
-            status="Completado"
-          />
-          <TransactionItem
-            title="Paseo de Perro"
-            date="Mar 25, 2026"
-            amount="+$13.500"
-            status="Completado"
-          />
+        <div className="bg-gray-50 rounded-[32px] overflow-hidden border border-gray-100">
+          <TransactionItem title="Reparación de Grifo" date="Abr 2, 2026" amount="-$40.500" status="Pagado" />
+          <TransactionItem title="Limpieza Apartamento" date="Mar 28, 2026" amount="-$72.000" status="Pagado" />
+          <TransactionItem title="Paseo de Perro" date="Mar 25, 2026" amount="-$13.500" status="En escrow" />
         </div>
       </section>
 
@@ -59,9 +44,7 @@ export default function PaymentPage() {
           </div>
           <div className="text-left">
             <h4 className="font-bold">Reportar Fallo</h4>
-            <p className="text-xs opacity-80">
-              Problemas con la recepción de dinero
-            </p>
+            <p className="text-xs opacity-80">Problemas con el envío de dinero</p>
           </div>
         </div>
         <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -92,19 +75,16 @@ function PaymentMethodCard({ type, number, isDefault }) {
 }
 
 function TransactionItem({ title, date, amount, status }) {
+  const isNegative = amount.startsWith('-');
   return (
     <div className="flex items-center justify-between p-6 border-b border-gray-100 last:border-0 bg-white hover:bg-gray-50 transition-colors">
       <div>
         <h4 className="font-bold">{title}</h4>
-        <p className="text-secondary text-xs">
-          {date} • {status}
-        </p>
+        <p className="text-secondary text-xs">{date} • {status}</p>
       </div>
       <div className="text-right">
-        <div className="font-bold text-green-600">{amount}</div>
-        <div className="text-[10px] font-bold text-secondary uppercase tracking-tighter">
-          Recibo #FT-9283
-        </div>
+        <div className={`font-bold ${isNegative ? 'text-red-500' : 'text-green-600'}`}>{amount}</div>
+        <div className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Recibo #FT</div>
       </div>
     </div>
   );
