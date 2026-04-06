@@ -8,17 +8,19 @@
 }
 
 @layer base {
-  body {
-    @apply bg-background text-black font-sans;
+  html, body {
+    background: transparent;
+    font-family: var(--font-sans);
+    color: black;
   }
 
   /* Scroll funciona pero la barra es invisible */
   * {
-    scrollbar-width: none;      /* Firefox */
-    -ms-overflow-style: none;   /* IE / Edge */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 
   *::-webkit-scrollbar {
-    display: none;              /* Chrome / Safari */
+    display: none;
   }
 }
