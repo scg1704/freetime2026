@@ -1,11 +1,13 @@
+// server.js
+
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-
 import authRoutes  from './api/routes/auth.routes.js';
 import tasksRoutes from './api/routes/tasks.routes.js';
 import usersRoutes from './api/routes/users.routes.js';
+import { globalApiLimiter } from './api/middlewares/rateLimiter.middleware.js';
 
 dotenv.config();
 
@@ -16,13 +18,27 @@ const app  = express();
 const PORT = process.env.PORT || 3001;
 
 // ─────────────────────────────────────────────
-// Middlewares
+// Configuración de proxy
+// Necesario para que express-rate-limit lea el IP
+// real cuando el servidor esté detrás de un proxy
+// (Nginx, Heroku, Railway, etc.).
+// En desarrollo local no afecta nada.
+// ─────────────────────────────────────────────
+app.set('trust proxy', 1);
+
+// ─────────────────────────────────────────────
+// Middlewares globales
 // ─────────────────────────────────────────────
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
+// Rate limit global — cubre TODAS las rutas /api/*
+// como red de seguridad ante floods genéricos.
+app.use('/api', globalApiLimiter);
+
 // ─────────────────────────────────────────────
 // API Routes
+// (Los limiters específicos de auth están en auth.routes.js)
 // ─────────────────────────────────────────────
 app.use('/api/auth',  authRoutes);
 app.use('/api/tasks', tasksRoutes);
