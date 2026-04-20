@@ -4,7 +4,7 @@ import { MessageSquare, Crown, ArrowLeft, Home, List, CreditCard, User } from 'l
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 
-const AUTH_PAGES = ['/', '/login', '/register', '/verification'];
+const AUTH_PAGES = ['/', '/login', '/register', '/verification', '/verify-email'];
 
 export default function Layout({ children }) {
   const location = useLocation();

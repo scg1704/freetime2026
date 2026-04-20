@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   User, Mail, Lock, Phone, ArrowRight, CheckCircle2,
   ArrowLeft, Eye, EyeOff, Camera, ChevronDown, Calendar,
-  MapPin, X, Check, AlertCircle, MapPinned, FileText
+  MapPin, X, Check, AlertCircle, MapPinned, FileText,
+  Upload, FlipHorizontal2
 } from 'lucide-react';
 import { cn } from '../../shared/lib/utils';
 import { useAuth } from '../../shared/context/AuthContext';
@@ -211,11 +212,20 @@ function BirthdayInput({ value, onChange, error }) {
 // Profile photo uploader
 // ─────────────────────────────────────────────
 function ProfilePhotoUploader({ preview, onChange }) {
-  const inputRef = useRef(null);
-  const [compressing, setCompressing] = useState(false);
-
-  const handleFile = async (e) => {
-    const file = e.target.files?.[0];
+  const fileInputRef = useRef(null);
+  const videoRef     = useRef(null);
+  const canvasRef    = useRef(null);
+  const streamRef    = useRef(null);
+ 
+  const [compressing,  setCompressing]  = useState(false);
+  const [showModal,    setShowModal]    = useState(false);   // modal de opciones
+  const [cameraOpen,   setCameraOpen]   = useState(false);   // stream activo
+  const [cameraReady,  setCameraReady]  = useState(false);
+  const [cameraError,  setCameraError]  = useState(false);
+  const [mirrored,     setMirrored]     = useState(true);    // espejo frontal
+ 
+  // ── Comprimir y notificar ──────────────────
+  const processFile = async (file) => {
     if (!file || !file.type.startsWith('image/')) return;
     setCompressing(true);
     try {
@@ -227,40 +237,264 @@ function ProfilePhotoUploader({ preview, onChange }) {
       reader.readAsDataURL(file);
     } finally {
       setCompressing(false);
-      e.target.value = '';
     }
   };
-
+ 
+  // ── Subir desde archivos ───────────────────
+  const handleFileInput = async (e) => {
+    await processFile(e.target.files?.[0]);
+    e.target.value = '';
+    setShowModal(false);
+  };
+ 
+  // ── Abrir cámara ───────────────────────────
+  const openCamera = async () => {
+    setShowModal(false);
+    setCameraError(false);
+    setCameraReady(false);
+    setCameraOpen(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 640 } },
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(() => {});
+        videoRef.current.onloadedmetadata = () => setCameraReady(true);
+      }
+    } catch {
+      setCameraError(true);
+    }
+  };
+ 
+  // ── Cerrar cámara y liberar stream ─────────
+  const closeCamera = () => {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    setCameraOpen(false);
+    setCameraReady(false);
+    setCameraError(false);
+  };
+ 
+  // ── Capturar frame del video ───────────────
+  const handleCapture = async () => {
+    const video  = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+ 
+    const size = Math.min(video.videoWidth, video.videoHeight);
+    canvas.width  = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+ 
+    // Recortar cuadrado central
+    const offX = (video.videoWidth  - size) / 2;
+    const offY = (video.videoHeight - size) / 2;
+ 
+    if (mirrored) {
+      ctx.translate(size, 0);
+      ctx.scale(-1, 1);
+    }
+    ctx.drawImage(video, offX, offY, size, size, 0, 0, size, size);
+ 
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      const file = new File([blob], 'selfie.jpg', { type: 'image/jpeg' });
+      closeCamera();
+      await processFile(file);
+    }, 'image/jpeg', 0.88);
+  };
+ 
+  // ─────────────────────────────────────────────────────────────────────
+  // Render
+  // ─────────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col items-center gap-3">
-      <div className="relative">
-        <button type="button" onClick={() => inputRef.current?.click()}
-          className={cn('w-24 h-24 rounded-3xl overflow-hidden border-2 border-dashed transition-all hover:scale-105 active:scale-95', preview ? 'border-primary/40' : 'border-gray-200 bg-gray-50 flex items-center justify-center')}>
-          {compressing ? (
-            <div className="flex flex-col items-center gap-1 animate-pulse">
-              <Camera className="w-7 h-7 text-primary/40" />
-            </div>
-          ) : preview ? (
-            <img src={preview} alt="Foto" className="w-full h-full object-cover" />
-          ) : (
-            <div className="flex flex-col items-center gap-1">
-              <Camera className="w-7 h-7 text-gray-300" />
-              <span className="text-[9px] font-bold uppercase tracking-wider text-gray-300">Foto</span>
-            </div>
-          )}
-        </button>
-        {preview && (
-          <button type="button" onClick={() => onChange(null)} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center shadow-sm hover:bg-red-600 transition-colors">
-            <X className="w-3 h-3" />
+    <>
+      {/* Canvas oculto para captura */}
+      <canvas ref={canvasRef} className="hidden" aria-hidden />
+ 
+      <div className="flex flex-col items-center gap-3">
+        {/* Thumbnail + botón de edición */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowModal(true)}
+            className={cn(
+              'w-24 h-24 rounded-3xl overflow-hidden border-2 border-dashed transition-all hover:scale-105 active:scale-95',
+              preview
+                ? 'border-primary/40'
+                : 'border-gray-200 bg-gray-50 flex items-center justify-center',
+            )}
+          >
+            {compressing ? (
+              <div className="flex flex-col items-center gap-1 animate-pulse">
+                <Camera className="w-7 h-7 text-primary/40" />
+              </div>
+            ) : preview ? (
+              <img src={preview} alt="Foto" className="w-full h-full object-cover" />
+            ) : (
+              <div className="flex flex-col items-center gap-1">
+                <Camera className="w-7 h-7 text-gray-300" />
+                <span className="text-[9px] font-bold uppercase tracking-wider text-gray-300">Foto</span>
+              </div>
+            )}
           </button>
-        )}
-        <button type="button" onClick={() => inputRef.current?.click()} className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center shadow-md hover:bg-primary/90 transition-colors">
-          <Camera className="w-3 h-3" />
-        </button>
+ 
+          {/* Botón eliminar */}
+          {preview && (
+            <button
+              type="button"
+              onClick={() => onChange(null)}
+              className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center shadow-sm hover:bg-red-600 transition-colors"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+ 
+          {/* Botón editar */}
+          <button
+            type="button"
+            onClick={() => setShowModal(true)}
+            className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center shadow-md hover:bg-[#5c178e] transition-colors"
+          >
+            <Camera className="w-3 h-3" />
+          </button>
+        </div>
+ 
+        <p className="text-[10px] font-semibold text-center text-red-400">
+          Coloca una foto clara de tu rostro para que podamos reconocerte. <br />
+          Foto de perfil obligatoria*
+        </p>
+ 
+        {/* Input file oculto */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileInput}
+        />
       </div>
-      <p className="text-[10px] text-gray-400 font-medium text-center">Foto de perfil (opcional)<br />Se comprime automáticamente</p>
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
-    </div>
+ 
+      {/* ── Modal de opciones ── */}
+      {showModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={() => setShowModal(false)}
+        >
+          {/* ── Modal de opciones — REEMPLAZA el bloque del div interno del modal ── */}
+          <div
+            className="w-full max-w-md bg-black rounded-3xl p-6 space-y-3 pb-10 mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-sm font-bold text-white text-center pb-1">Agregar foto de perfil</p>
+
+            <button
+              type="button"
+              onClick={openCamera}
+              className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl bg-white/10 hover:bg-white/20 transition-colors"
+            >
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                <Camera className="w-5 h-5 text-primary" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-bold text-white">Tomar foto</p>
+                <p className="text-xs text-white/60">Usa la cámara de tu dispositivo</p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl bg-white/10 hover:bg-white/20 transition-colors"
+            >
+              <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                <Upload className="w-5 h-5 text-blue-400" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-bold text-white">Subir desde archivos</p>
+                <p className="text-xs text-white/60">JPG, PNG, HEIC — máx. 5 MB</p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowModal(false)}
+              className="w-full py-3 text-sm font-bold text-white bg-primary hover:bg-[#5c178e] rounded-2xl transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+ 
+      {/* ── Modal de cámara ── */}
+      {cameraOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black">
+          {/* Header */}
+          <div className="absolute top-0 inset-x-0 flex items-center justify-between px-5 py-4 z-10">
+            <button
+              type="button"
+              onClick={closeCamera}
+              className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+            <p className="text-white text-sm font-bold">Foto de perfil</p>
+            {/* Botón espejo */}
+            <button
+              type="button"
+              onClick={() => setMirrored((m) => !m)}
+              className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+              title="Invertir imagen"
+            >
+              <FlipHorizontal2 className="w-5 h-5 text-white" />
+            </button>
+          </div>
+ 
+          {/* Video */}
+          <div className="relative w-72 h-72 rounded-full overflow-hidden border-4 border-white/30">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className={cn('w-full h-full object-cover', mirrored && 'scale-x-[-1]')}
+            />
+            {!cameraReady && !cameraError && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/60">
+                <Camera className="w-8 h-8 text-white/50 animate-pulse" />
+                <p className="text-white/60 text-xs font-medium">Iniciando cámara…</p>
+              </div>
+            )}
+            {cameraError && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/80 px-6 text-center">
+                <AlertCircle className="w-8 h-8 text-red-400" />
+                <p className="text-white text-xs font-bold">No se pudo acceder a la cámara. Verifica los permisos del navegador.</p>
+              </div>
+            )}
+          </div>
+ 
+          {/* Guía */}
+          <p className="text-white/60 text-xs mt-5 font-medium text-center px-10">
+            Coloca tu rostro dentro del círculo y asegúrate de estar bien iluminado
+          </p>
+ 
+          {/* Botón capturar */}
+          <div className="absolute bottom-12 inset-x-0 flex justify-center">
+            <button
+              type="button"
+              onClick={handleCapture}
+              disabled={!cameraReady || cameraError}
+              className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center disabled:opacity-40 active:scale-95 transition-transform"
+            >
+              <div className="w-14 h-14 rounded-full bg-white" />
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -365,6 +599,7 @@ export default function RegisterPage() {
   };
 
   const validateStep3 = () => {
+    if (!photo?.preview)  return 'La foto de perfil es obligatoria para crear tu cuenta.';
     if (!name.trim())     return 'El nombre es requerido.';
     if (!lastName.trim()) return 'El apellido es requerido.';
     if (phone.replace(/\D/g, '').length < 10) return 'Ingresa un número de teléfono válido (10 dígitos).';
@@ -429,7 +664,7 @@ export default function RegisterPage() {
 
       // remember = true: new users should stay logged in
       login(data.user, true);
-      navigate('/verification');
+      navigate('/verify-email');
     } catch {
       setError('Error de conexión. Intenta de nuevo.');
     } finally {
@@ -616,7 +851,12 @@ export default function RegisterPage() {
 
               <BirthdayInput value={birthdate} onChange={(val) => { setBirthdate(val); setBirthdateError(''); }} error={birthdateError} />
 
-              <Button className="bg-primary hover:bg-[#5c178e] text-white" variant="primary" size="lg" loading={loading} type="submit">
+              {!photo?.preview && (
+                <p className="text-[11px] text-red-400 font-semibold text-center">
+                  Sube una foto de perfil para continuar.
+                </p>
+              )}
+              <Button className="bg-primary hover:bg-[#5c178e] text-white" variant="primary" size="lg" loading={loading} type="submit" disabled={!photo?.preview}>
                 Finalizar Registro <CheckCircle2 className="w-5 h-5" />
               </Button>
             </form>
