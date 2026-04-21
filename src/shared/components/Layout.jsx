@@ -13,7 +13,6 @@ const MAIN_PAGES = [
   '/fulltimer/home', '/fulltimer/my-tasks', '/fulltimer/payment', '/fulltimer/profile',
 ];
 
-// Halo de texto blanco — igual al de "FREETIME"
 const WHITE_GLOW = '0 0 12px rgba(255,255,255,0.55), 0 0 28px rgba(255,255,255,0.25)';
 
 export default function Layout({ children }) {
@@ -28,24 +27,24 @@ export default function Layout({ children }) {
   const prefix     = user?.role === 'FREETIMER' ? '/freetimer' : '/fulltimer';
   const homeRoute  = `${prefix}/home`;
 
-  const navLinks = [
-    { to: `${prefix}/home`,
-      icon: <Home />, label: 'Inicio' },
-    { to: user?.role === 'FREETIMER' ? '/freetimer/tasks' : '/fulltimer/my-tasks',
-      icon: <List />, label: 'Tareas' },
-    { to: `${prefix}/payment`,
-      icon: <CreditCard />, label: 'Pagos' },
-    { to: `${prefix}/profile`,
-      icon: <User />, label: 'Perfil' },
-  ];
+  // Freetimer tiene 4 tabs; Fulltimer solo tiene 3 (sin "Tareas")
+  const navLinks = user?.role === 'FREETIMER'
+    ? [
+        { to: '/freetimer/home',    icon: <Home />,       label: 'Inicio' },
+        { to: '/freetimer/tasks',   icon: <List />,       label: 'Tareas' },
+        { to: '/freetimer/payment', icon: <CreditCard />, label: 'Pagos' },
+        { to: '/freetimer/profile', icon: <User />,       label: 'Perfil' },
+      ]
+    : [
+        { to: '/fulltimer/home',    icon: <Home />,       label: 'Inicio' },
+        { to: '/fulltimer/payment', icon: <CreditCard />, label: 'Pagos' },
+        { to: '/fulltimer/profile', icon: <User />,       label: 'Perfil' },
+      ];
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
-
-      {/* ── Top Navbar ──────────────────────────────────────────────────── */}
+      {/* ── Top Navbar ── */}
       <header className="fixed top-0 left-0 right-0 h-16 bg-primary flex items-center px-4 z-50">
-
-        {/* Botón volver — solo en páginas secundarias */}
         <div className="w-10">
           {!isMainPage && (
             <button
@@ -58,7 +57,6 @@ export default function Layout({ children }) {
           )}
         </div>
 
-        {/* FREETIME — centro, clickeable, con halo blanco */}
         <div className="absolute left-0 right-0 flex justify-center pointer-events-none">
           <Link
             to={homeRoute}
@@ -76,29 +74,23 @@ export default function Layout({ children }) {
           </Link>
         </div>
 
-        {/* Botones derecha — hover: escala + halo blanco en el texto/ícono */}
         <div className="ml-auto flex items-center gap-3 z-10">
-
-          {/* Premium */}
           <TopBarButton>
             <Crown className="w-5 h-5" />
             <span className="hidden sm:inline text-sm font-medium">Premium</span>
           </TopBarButton>
-
-          {/* Chat — sin halo circular, solo escala + glow igual que Premium */}
           <TopBarButton>
             <MessageSquare className="w-6 h-6" />
           </TopBarButton>
-
         </div>
       </header>
 
-      {/* ── Main Content ────────────────────────────────────────────────── */}
+      {/* ── Main Content ── */}
       <main className="flex-1 pt-16 pb-20">
         {children}
       </main>
 
-      {/* ── Bottom Navbar ───────────────────────────────────────────────── */}
+      {/* ── Bottom Navbar ── */}
       <nav className="fixed bottom-0 left-0 right-0 h-20 bg-primary flex items-center justify-around px-2 z-50">
         {navLinks.map((link) => (
           <NavItem
@@ -110,16 +102,10 @@ export default function Layout({ children }) {
           />
         ))}
       </nav>
-
     </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TopBarButton
-// Hover: escala 1.15 + halo blanco (text-shadow) sobre el contenido.
-// Sin ningún fondo ni círculo.
-// ─────────────────────────────────────────────────────────────────────────────
 function TopBarButton({ children, onClick }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -138,11 +124,6 @@ function TopBarButton({ children, onClick }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// NavItem
-// Activo: círculo blanco sólido + ícono y letra morados (comportamiento original).
-// Hover (inactivo): escala 1.12 + glow blanco tipo text-shadow. Sin halo circular.
-// ─────────────────────────────────────────────────────────────────────────────
 function NavItem({ to, icon, label, active }) {
   const [hovered, setHovered] = useState(false);
   const showGlow = hovered && !active;
@@ -154,19 +135,18 @@ function NavItem({ to, icon, label, active }) {
       onMouseLeave={() => setHovered(false)}
       className="flex flex-col items-center justify-center gap-1 w-16"
     >
-      {/* Contenedor del ícono */}
       <motion.div
         animate={
           active
-            ? { scale: 1.15, y: -2 }                  // activo: escala suave
+            ? { scale: 1.15, y: -2 }
             : hovered
-              ? { scale: 1.12, y: 0 }                 // hover inactivo: escala + glow
+              ? { scale: 1.12, y: 0 }
               : { scale: 1,    y: 0 }
         }
         transition={{ type: 'spring', stiffness: 340, damping: 22 }}
         className={cn(
           'w-10 h-10 flex items-center justify-center rounded-full transition-colors duration-200',
-          active ? 'bg-white' : 'bg-transparent'       // ← círculo blanco solo si activo
+          active ? 'bg-white' : 'bg-transparent'
         )}
         style={{
           filter: showGlow ? 'drop-shadow(0 0 7px rgba(255,255,255,0.75))' : 'none',
@@ -176,13 +156,12 @@ function NavItem({ to, icon, label, active }) {
         {React.cloneElement(icon, {
           className: cn(
             'w-5 h-5 transition-colors duration-200',
-            active ? 'text-primary' : 'text-white'     // ← morado dentro del círculo
+            active ? 'text-primary' : 'text-white'
           ),
           strokeWidth: active ? 2.5 : 1.8,
         })}
       </motion.div>
 
-      {/* Label */}
       <motion.span
         animate={active ? { opacity: 1 } : { opacity: hovered ? 1 : 0.65 }}
         transition={{ duration: 0.18 }}

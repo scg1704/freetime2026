@@ -38,7 +38,7 @@ function Sparkle({ x, y, color, delay, scale }) {
 
 export default function SparklesText({
   text,
-  colors = { first: '#A64CEA', second: '#d8b4fe' },
+  colors = { first: '#7D27BE', second: '#d8b4fe' },
   className,
   sparklesCount = 10,
 }) {

@@ -7,7 +7,7 @@ import LandingPage             from './auth/pages/LandingPage';
 import LoginPage               from './auth/pages/LoginPage';
 import RegisterPage            from './auth/pages/RegisterPage';
 import EmailVerificationPage   from './auth/pages/EmailVerificationPage';
-import VerificationPage        from './auth/pages/VerificationPage';   // biométrica — solo desde perfil
+import VerificationPage        from './auth/pages/VerificationPage';
 
 // Freetimer
 import FreetimerDashboard   from './freetimer/pages/FreetimerDashboard';
@@ -22,6 +22,7 @@ import FulltimerDashboard   from './fulltimer/pages/FulltimerDashboard';
 import PostTaskPage          from './fulltimer/pages/PostTaskPage';
 import MyTasksPage           from './fulltimer/pages/MyTasksPage';
 import ApplicantsPage        from './fulltimer/pages/ApplicantsPage';
+import TaskHistoryPage       from './fulltimer/pages/TaskHistoryPage';
 import FulltimerPaymentPage  from './fulltimer/pages/PaymentPage';
 import FulltimerProfilePage  from './fulltimer/pages/ProfilePage';
 
@@ -36,8 +37,6 @@ function LoadingScreen() {
   );
 }
 
-// Rutas públicas: si ya hay sesión verificada → dashboard
-// Si hay sesión pero sin verificar → /verify-email
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <LoadingScreen />;
@@ -49,8 +48,6 @@ function PublicRoute({ children }) {
   return children;
 }
 
-// Requiere sesión + verified=true
-// Sin sesión → landing | Sin verificar → verify-email | Rol incorrecto → su dashboard
 function ProtectedRoute({ children, requiredRole }) {
   const { user, loading } = useAuth();
   if (loading) return <LoadingScreen />;
@@ -63,8 +60,6 @@ function ProtectedRoute({ children, requiredRole }) {
   return children;
 }
 
-// Solo accesible con sesión activa y sin verificar todavía
-// Si ya está verificado → salta al dashboard
 function EmailVerifyRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <LoadingScreen />;
@@ -76,7 +71,6 @@ function EmailVerifyRoute({ children }) {
   return children;
 }
 
-// Accesible con sesión activa (verificado o no) — para la verificación biométrica del perfil
 function SessionRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <LoadingScreen />;
@@ -95,11 +89,9 @@ export default function App() {
             <Route path="/login"    element={<PublicRoute><LoginPage /></PublicRoute>} />
             <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
 
-            {/* Verificación de email — post registro */}
-            <Route path="/verify-email" element={<EmailVerifyRoute><EmailVerificationPage /></EmailVerifyRoute>} />
-
-            {/* Verificación biométrica — solo desde perfil, no obligatoria al registrar */}
-            <Route path="/verification" element={<SessionRoute><VerificationPage /></SessionRoute>} />
+            {/* Verificación */}
+            <Route path="/verify-email"  element={<EmailVerifyRoute><EmailVerificationPage /></EmailVerifyRoute>} />
+            <Route path="/verification"  element={<SessionRoute><VerificationPage /></SessionRoute>} />
 
             {/* Freetimer */}
             <Route path="/freetimer/home"               element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerDashboard /></ProtectedRoute>} />
@@ -110,12 +102,13 @@ export default function App() {
             <Route path="/freetimer/profile"            element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerProfilePage /></ProtectedRoute>} />
 
             {/* Fulltimer */}
-            <Route path="/fulltimer/home"                       element={<ProtectedRoute requiredRole="FULLTIMER"><FulltimerDashboard /></ProtectedRoute>} />
-            <Route path="/fulltimer/post-task"                  element={<ProtectedRoute requiredRole="FULLTIMER"><PostTaskPage /></ProtectedRoute>} />
-            <Route path="/fulltimer/my-tasks"                   element={<ProtectedRoute requiredRole="FULLTIMER"><MyTasksPage /></ProtectedRoute>} />
-            <Route path="/fulltimer/task/:taskId/applicants"    element={<ProtectedRoute requiredRole="FULLTIMER"><ApplicantsPage /></ProtectedRoute>} />
-            <Route path="/fulltimer/payment"                    element={<ProtectedRoute requiredRole="FULLTIMER"><FulltimerPaymentPage /></ProtectedRoute>} />
-            <Route path="/fulltimer/profile"                    element={<ProtectedRoute requiredRole="FULLTIMER"><FulltimerProfilePage /></ProtectedRoute>} />
+            <Route path="/fulltimer/home"                     element={<ProtectedRoute requiredRole="FULLTIMER"><FulltimerDashboard /></ProtectedRoute>} />
+            <Route path="/fulltimer/post-task"                element={<ProtectedRoute requiredRole="FULLTIMER"><PostTaskPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/my-tasks"                 element={<ProtectedRoute requiredRole="FULLTIMER"><MyTasksPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/task-history"             element={<ProtectedRoute requiredRole="FULLTIMER"><TaskHistoryPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/task/:taskId/applicants"  element={<ProtectedRoute requiredRole="FULLTIMER"><ApplicantsPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/payment"                  element={<ProtectedRoute requiredRole="FULLTIMER"><FulltimerPaymentPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/profile"                  element={<ProtectedRoute requiredRole="FULLTIMER"><FulltimerProfilePage /></ProtectedRoute>} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

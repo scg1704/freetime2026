@@ -237,7 +237,7 @@ export default function LandingPage() {
           <SparklesText
             text="FREETIME"
             sparklesCount={14}
-            colors={{ first: '#A64CEA', second: '#d8b4fe' }}
+            colors={{ first: '#7D27BE', second: '#d8b4fe' }}
             className="text-6xl sm:text-8xl md:text-9xl tracking-tighter text-white"
           />
         </motion.div>
@@ -253,7 +253,7 @@ export default function LandingPage() {
         <SparklesText
           text="Únete hoy"
           sparklesCount={8}
-          colors={{ first: '#A64CEA', second: '#d8b4fe' }}
+          colors={{ first: '#7D27BE', second: '#d8b4fe' }}
           className="text-5xl sm:text-6xl md:text-7xl tracking-tighter text-white"
         />
         <p className="text-[#B3B3B3] text-lg sm:text-xl max-w-md leading-relaxed bg-black/20 backdrop-blur-sm rounded-2xl px-6 py-4 border border-white/5">
