@@ -47,13 +47,15 @@ export default function Layout({ children }) {
       <header className="fixed top-0 left-0 right-0 h-16 bg-primary flex items-center px-4 z-50">
         <div className="w-10">
           {!isMainPage && (
-            <button
-              onClick={() => navigate(-1)}
-              aria-label="Volver"
-              className="p-2 transition-transform hover:scale-110"
-            >
-              <ArrowLeft className="w-6 h-6 text-white" />
-            </button>
+            <TopBarButton>
+              <button
+                onClick={() => navigate(-1)}
+                aria-label="Volver"
+                className="p-2 transition-transform hover:scale-110"
+              >
+                <ArrowLeft className="w-6 h-6 text-white cursor-pointer" />
+              </button>
+            </TopBarButton>
           )}
         </div>
 
@@ -76,11 +78,11 @@ export default function Layout({ children }) {
 
         <div className="ml-auto flex items-center gap-3 z-10">
           <TopBarButton>
-            <Crown className="w-5 h-5" />
-            <span className="hidden sm:inline text-sm font-medium">Premium</span>
+            <Crown className="w-5 h-5 cursor-pointer" />
+            <span className="hidden sm:inline text-sm font-medium cursor-pointer">Premium</span>
           </TopBarButton>
           <TopBarButton>
-            <MessageSquare className="w-6 h-6" />
+            <MessageSquare className="w-6 h-6 cursor-pointer" />
           </TopBarButton>
         </div>
       </header>
