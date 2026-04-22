@@ -40,7 +40,6 @@ function CharCount({ current, max }) {
   );
 }
 
-// SectionDivider — ícono w-5 h-5, texto text-sm
 function SectionDivider({ icon: Icon, title }) {
   return (
     <div className="flex items-center gap-3 py-2">
@@ -54,7 +53,6 @@ function SectionDivider({ icon: Icon, title }) {
   );
 }
 
-// FieldLabel — text-[13px], notablemente menor que SectionDivider
 function FieldLabel({ icon: Icon, children }) {
   return (
     <label className="text-[13px] font-bold uppercase tracking-wider flex items-center gap-1.5 mb-2"
@@ -134,7 +132,7 @@ function LevelSelector({ value, onChange }) {
   );
 }
 
-// ─── Duration Picker: horas + minutos ─────────────────────────────────────────
+// ─── Duration Picker ──────────────────────────────────────────────────────────
 function DurationPicker({ hours, minutes, onHoursChange, onMinutesChange }) {
   const hNum = Number(hours);
   const mNum = Number(minutes);
@@ -145,9 +143,8 @@ function DurationPicker({ hours, minutes, onHoursChange, onMinutesChange }) {
   return (
     <div className="space-y-2">
       <div className="flex gap-3 items-end">
-        {/* Horas */}
         <div className="flex-1">
-          <p className="text-[11px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Horas (0–23)</p>
+          <p className="text-[11px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Horas (0-23)</p>
           <div className="relative">
             <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: '#9ca3af' }} />
             <input type="number" min="0" max="23" step="1" placeholder="0"
@@ -170,9 +167,8 @@ function DurationPicker({ hours, minutes, onHoursChange, onMinutesChange }) {
 
         <div className="pb-[18px] text-2xl font-black select-none" style={{ color: '#d1d5db' }}>:</div>
 
-        {/* Minutos */}
         <div className="flex-1">
-          <p className="text-[11px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Minutos (0–59)</p>
+          <p className="text-[11px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Minutos (0-59)</p>
           <div className="relative">
             <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: '#9ca3af' }} />
             <input type="number" min="0" max="59" step="5" placeholder="0"
@@ -213,29 +209,21 @@ function DurationPicker({ hours, minutes, onHoursChange, onMinutesChange }) {
   );
 }
 
-// ─── Formatea la dirección: Departamento, Ciudad, Dirección corta ─────────────
+// ─── FIX 1 & 2: Formatea la dirección de forma más precisa ───────────────────
 function formatAddress(data) {
   const a = data.address || {};
 
-  // Departamento (estado)
   const dept = a.state || a.region || '';
-
-  // Ciudad — varios campos posibles en Colombia
   const city =
     a.city || a.town || a.municipality || a.county ||
     a.village || a.suburb || '';
-
-  // Calle / dirección puntual
   const road   = a.road || a.pedestrian || a.footway || '';
   const number = a.house_number || '';
   const street = [road, number].filter(Boolean).join(' ');
+  const neighbourhood = a.neighbourhood || a.quarter || '';
 
-  // Barrio / localidad — opcional, solo si agrega contexto
-  const neighbourhood = a.neighbourhood || a.quarter || a.suburb || '';
-
-  // Construir partes en orden: Departamento → Ciudad → Calle (Barrio)
   const parts = [];
-  if (dept)   parts.push(dept);
+  if (dept) parts.push(dept);
   if (city && city !== dept) parts.push(city);
   if (street) {
     const streetFull = neighbourhood && neighbourhood !== city
@@ -249,21 +237,27 @@ function formatAddress(data) {
   return parts.length > 0 ? parts.join(' · ') : data.display_name;
 }
 
-// ─── Map Picker (Leaflet + Nominatim, sin API key) ────────────────────────────
-function MapPicker({ value, onChange }) {
-  const mapRef     = useRef(null);
-  const leafletMap = useRef(null);
-  const markerRef  = useRef(null);
-  const debounce   = useRef(null);
+// ─── FIX 1, 2 & 3: Map Picker mejorado con campo "Detalles de ubicación" ─────
+function MapPicker({ value, locationDetails, onLocationChange, onDetailsChange }) {
+  const mapRef      = useRef(null);
+  const leafletMap  = useRef(null);
+  const markerRef   = useRef(null);
+  const debounce    = useRef(null);
+  const isSelectingRef = useRef(false); // evita que el reverseGeocode sobreescriba el query activo
 
-  const [query, setQuery]           = useState(value || '');
+  const [query, setQuery]             = useState(value || '');
   const [suggestions, setSuggestions] = useState([]);
   const [loadingSuggest, setLoadingSuggest] = useState(false);
-  const [coords, setCoords]         = useState(null);
-  const [mapReady, setMapReady]     = useState(false);
-  const [showSugg, setShowSugg]     = useState(false);
-  const [geoLoading, setGeoLoading] = useState(false);
-  const [geoError, setGeoError]     = useState('');
+  const [coords, setCoords]           = useState(null);
+  const [mapReady, setMapReady]       = useState(false);
+  const [showSugg, setShowSugg]       = useState(false);
+  const [geoLoading, setGeoLoading]   = useState(false);
+  const [geoError, setGeoError]       = useState('');
+
+  // Sync query si el valor externo cambia (p.ej. al limpiar el form)
+  useEffect(() => {
+    if (!value) { setQuery(''); setCoords(null); }
+  }, [value]);
 
   // Cargar Leaflet dinámicamente
   useEffect(() => {
@@ -283,10 +277,15 @@ function MapPicker({ value, onChange }) {
     if (!mapReady || !mapRef.current || leafletMap.current) return;
     const L = window.L;
     const defaultLatLng = [4.7110, -74.0721]; // Bogotá
-    const map = L.map(mapRef.current, { zoomControl: true, attributionControl: false }).setView(defaultLatLng, 13);
+    // FIX MOBILE z-index: el mapa y sus tiles deben estar por debajo del navbar (z-50 = 50)
+    const map = L.map(mapRef.current, {
+      zoomControl: true,
+      attributionControl: false,
+    }).setView(defaultLatLng, 13);
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-    // Marcador morado estilo Uber/pin
+    // Marcador morado
     const icon = L.divIcon({
       html: `
         <div style="position:relative;width:36px;height:44px;">
@@ -323,16 +322,17 @@ function MapPicker({ value, onChange }) {
     leafletMap.current = map;
   }, [mapReady]);
 
+  // FIX 1: reverseGeocode más preciso con zoom=18 para mayor detalle
   const reverseGeocode = async (lat, lng) => {
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=18&addressdetails=1`,
         { headers: { 'Accept-Language': 'es' } }
       );
       const data = await res.json();
       const addr = formatAddress(data);
       setQuery(addr);
-      onChange(addr);
+      onLocationChange(addr);
     } catch { /* silent */ }
   };
 
@@ -350,7 +350,7 @@ function MapPicker({ value, onChange }) {
         setCoords({ lat, lng });
         if (leafletMap.current && markerRef.current) {
           markerRef.current.setLatLng([lat, lng]);
-          leafletMap.current.setView([lat, lng], 16, { animate: true });
+          leafletMap.current.setView([lat, lng], 17, { animate: true });
         }
         await reverseGeocode(lat, lng);
         setGeoLoading(false);
@@ -369,7 +369,7 @@ function MapPicker({ value, onChange }) {
     setLoadingSuggest(true);
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=co`,
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&countrycodes=co&addressdetails=1`,
         { headers: { 'Accept-Language': 'es' } }
       );
       const data = await res.json();
@@ -379,43 +379,51 @@ function MapPicker({ value, onChange }) {
     setLoadingSuggest(false);
   };
 
+  // FIX 2: el campo de búsqueda ahora actualiza la ubicación al escribir directamente
   const handleInput = (val) => {
     setQuery(val);
-    onChange(val);
+    onLocationChange(val); // refleja inmediatamente el texto escrito
     clearTimeout(debounce.current);
     debounce.current = setTimeout(() => searchAddress(val), 450);
   };
 
+  // FIX 2: al seleccionar sugerencia, el mapa se mueve Y el campo se actualiza
   const selectSuggestion = async (item) => {
+    isSelectingRef.current = true;
     const lat = parseFloat(item.lat);
     const lng = parseFloat(item.lon);
     setCoords({ lat, lng });
     setSuggestions([]);
     setShowSugg(false);
+
     if (leafletMap.current && markerRef.current) {
       markerRef.current.setLatLng([lat, lng]);
-      leafletMap.current.setView([lat, lng], 16, { animate: true });
+      leafletMap.current.setView([lat, lng], 17, { animate: true });
     }
-    // Hacer reverse geocode para obtener dirección estructurada
+
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=18&addressdetails=1`,
         { headers: { 'Accept-Language': 'es' } }
       );
       const data = await res.json();
       const addr = formatAddress(data);
       setQuery(addr);
-      onChange(addr);
+      onLocationChange(addr);
     } catch {
-      const addr = formatAddress({ address: {}, display_name: item.display_name });
+      const addr = item.display_name;
       setQuery(addr);
-      onChange(addr);
+      onLocationChange(addr);
     }
+    isSelectingRef.current = false;
   };
 
   const clearAll = () => {
-    setQuery(''); onChange('');
-    setSuggestions([]); setShowSugg(false); setCoords(null);
+    setQuery('');
+    onLocationChange('');
+    setSuggestions([]);
+    setShowSugg(false);
+    setCoords(null);
   };
 
   return (
@@ -449,7 +457,7 @@ function MapPicker({ value, onChange }) {
         <div className="flex-1 h-px" style={{ background: '#e5e7eb' }} />
       </div>
 
-      {/* Campo de búsqueda */}
+      {/* FIX 2: Campo de búsqueda — ahora bidireccional con el mapa */}
       <div className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: '#9ca3af' }} />
         <input
@@ -457,7 +465,7 @@ function MapPicker({ value, onChange }) {
           placeholder="Busca tu dirección en Colombia..."
           value={query}
           onChange={e => handleInput(e.target.value)}
-          onFocus={() => query.length >= 3 && setShowSugg(true)}
+          onFocus={() => query.length >= 3 && suggestions.length > 0 && setShowSugg(true)}
           style={{
             background: '#fafafa',
             border: `2px solid ${query ? PRIMARY : '#e5e7eb'}`,
@@ -482,8 +490,9 @@ function MapPicker({ value, onChange }) {
           {showSugg && suggestions.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
-              className="absolute z-50 left-0 right-0 top-full mt-2 rounded-2xl overflow-hidden"
-              style={{ background: '#fff', border: '1.5px solid #e5e7eb', boxShadow: '0 12px 40px rgba(0,0,0,0.1)' }}
+              className="absolute left-0 right-0 top-full mt-2 rounded-2xl overflow-hidden"
+              // FIX 5: z-index menor que el navbar (z-50), pero mayor que el mapa
+              style={{ background: '#fff', border: '1.5px solid #e5e7eb', boxShadow: '0 12px 40px rgba(0,0,0,0.1)', zIndex: 40 }}
               onMouseLeave={() => setShowSugg(false)}>
               {suggestions.map((item, i) => (
                 <button key={i} type="button" onMouseDown={() => selectSuggestion(item)}
@@ -500,16 +509,19 @@ function MapPicker({ value, onChange }) {
         </AnimatePresence>
       </div>
 
-      {/* Mapa */}
-      <div className="relative rounded-2xl overflow-hidden"
+      {/* FIX 5: Mapa con z-index controlado para no superar el navbar */}
+      <div
+        className="relative rounded-2xl overflow-hidden"
         style={{
           height: '280px',
           border: `2px solid ${coords ? PRIMARY : '#e5e7eb'}`,
           transition: 'border-color 0.3s ease',
           boxShadow: coords ? `0 4px 20px ${PRIMARY}22` : 'none',
+          // Crítico: el mapa y sus popups/controles deben estar por debajo del navbar (z-50)
+          zIndex: 0,
+          isolation: 'isolate',
         }}>
 
-        {/* Loader */}
         {!mapReady && (
           <div className="absolute inset-0 flex items-center justify-center z-10"
             style={{ background: '#fafafa' }}>
@@ -523,24 +535,22 @@ function MapPicker({ value, onChange }) {
 
         <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
 
-        {/* Hint antes de seleccionar */}
         {mapReady && !coords && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full pointer-events-none z-20 whitespace-nowrap"
-            style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }}>
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full pointer-events-none whitespace-nowrap"
+            style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)', zIndex: 5 }}>
             <p className="text-[10px] font-bold text-white">
               📍 Toca el mapa o busca tu dirección arriba
             </p>
           </motion.div>
         )}
 
-        {/* Badge coordenadas */}
         <AnimatePresence>
           {coords && (
             <motion.div initial={{ opacity: 0, scale: 0.85, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.85 }}
-              className="absolute top-3 right-3 px-3 py-1.5 rounded-xl z-20 flex items-center gap-1.5"
-              style={{ background: PRIMARY, boxShadow: `0 4px 14px ${PRIMARY}66` }}>
+              className="absolute top-3 right-3 px-3 py-1.5 rounded-xl flex items-center gap-1.5"
+              style={{ background: PRIMARY, boxShadow: `0 4px 14px ${PRIMARY}66`, zIndex: 5 }}>
               <CheckCircle2 className="w-3 h-3 text-white" />
               <p className="text-[9px] font-black text-white tracking-wider">
                 {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
@@ -565,6 +575,23 @@ function MapPicker({ value, onChange }) {
       <p className="text-[9px] font-medium" style={{ color: '#d1d5db' }}>
         © OpenStreetMap contributors · Puedes arrastrar el marcador para ajustar la posición exacta
       </p>
+
+      {/* FIX 3: Campo de detalles de la ubicación */}
+      <div>
+        <FieldLabel icon={MapPin}>
+          Detalles de la ubicación (Opcional)
+        </FieldLabel>
+        
+        <LightInput
+          type="text" 
+          placeholder="Apto 301, Torre B, piso 3, portería norte, referencias..." 
+          maxLength={200}
+          value={locationDetails} 
+          onChange={e => onDetailsChange(e.target.value)} 
+        />
+        
+        <CharCount current={(locationDetails || '').length} max={200} />
+      </div>
     </div>
   );
 }
@@ -616,7 +643,7 @@ function ScrollBar({ containerRef }) {
   );
 }
 
-// ─── Floating Panels ──────────────────────────────────────────────────────────
+// ─── Floating Panels (desktop) ────────────────────────────────────────────────
 function ProgressPanel({ formData }) {
   const filled = [
     formData.title, formData.description, formData.category,
@@ -643,6 +670,75 @@ function ProgressPanel({ formData }) {
         </div>
       </div>
       <p className="text-[12px] text-center font-semibold" style={{ color: '#9ca3af' }}>{filled}/8 campos</p>
+    </div>
+  );
+}
+
+// FIX 6: Rueda de progreso flotante para mobile
+function FloatingProgress({ formData }) {
+  const filled = [
+    formData.title, formData.description, formData.category,
+    formData.subcategory, formData.location, formData.date,
+    (Number(formData.durationHours) > 0 || Number(formData.durationMinutes) > 0) ? '1' : '',
+    formData.budget,
+  ].filter(Boolean).length;
+  const pct = Math.round((filled / 8) * 100);
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    // z-40 para estar por encima del contenido pero por debajo del navbar (z-50)
+    <div className="fixed bottom-24 right-4 z-40 md:hidden">
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 10 }}
+            className="absolute bottom-16 right-0 rounded-2xl p-4 w-44"
+            style={{
+              background: '#fff',
+              border: '1.5px solid #e5e7eb',
+              boxShadow: '0 8px 32px rgba(125,39,190,0.15)',
+            }}>
+            <p className="text-[11px] font-black uppercase tracking-widest mb-2" style={{ color: '#9ca3af' }}>
+              Progreso
+            </p>
+            <p className="text-xs font-semibold" style={{ color: '#6b7280' }}>{filled}/8 campos completados</p>
+            <div className="mt-2 w-full rounded-full overflow-hidden" style={{ height: 6, background: '#f3e8ff' }}>
+              <motion.div
+                animate={{ width: `${pct}%` }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                className="h-full rounded-full"
+                style={{ background: `linear-gradient(to right, ${PRIMARY}, #a855f7)` }}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <motion.button
+        type="button"
+        whileTap={{ scale: 0.92 }}
+        onClick={() => setExpanded(v => !v)}
+        className="relative w-14 h-14 rounded-full flex items-center justify-center shadow-lg cursor-pointer"
+        style={{
+          background: '#fff',
+          border: `2.5px solid ${PRIMARY}`,
+          boxShadow: `0 4px 20px ${PRIMARY}44`,
+        }}>
+        {/* Mini rueda SVG */}
+        <svg className="w-10 h-10 -rotate-90" viewBox="0 0 40 40">
+          <circle cx="20" cy="20" r="15" fill="none" stroke="#f3e8ff" strokeWidth="4" />
+          <circle cx="20" cy="20" r="15" fill="none" stroke={PRIMARY} strokeWidth="4"
+            strokeDasharray={`${2 * Math.PI * 15}`}
+            strokeDashoffset={`${2 * Math.PI * 15 * (1 - pct / 100)}`}
+            strokeLinecap="round"
+            style={{ transition: 'stroke-dashoffset 0.5s ease' }} />
+        </svg>
+        <span className="absolute text-[10px] font-black" style={{ color: PRIMARY }}>
+          {pct}%
+        </span>
+      </motion.button>
     </div>
   );
 }
@@ -748,6 +844,62 @@ function ChecklistPanel({ formData }) {
   );
 }
 
+// ─── FIX 4: DateTimeButton — input de fecha con apariencia de botón morado ────
+function DateTimeButton({ value, onChange }) {
+  const inputRef = useRef(null);
+  const hasValue = !!value;
+
+  const formatted = hasValue
+    ? new Date(value).toLocaleDateString('es-CO', {
+        day: 'numeric', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      })
+    : null;
+
+  return (
+    <div className="relative">
+      {/* Botón visual morado */}
+      <button
+        type="button"
+        onClick={() => inputRef.current?.showPicker?.() || inputRef.current?.click()}
+        className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl font-bold text-sm transition-all cursor-pointer"
+        style={{
+          background: hasValue ? PRIMARY : PRIMARY,
+          border: `2px solid ${PRIMARY}`,
+          color: '#fff',
+          boxShadow: `0 4px 18px ${PRIMARY}44`,
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = '#5c178e'; e.currentTarget.style.borderColor = '#5c178e'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = PRIMARY; e.currentTarget.style.borderColor = PRIMARY; }}>
+        <Calendar className="w-5 h-5 text-white shrink-0" />
+        <span className="flex-1 text-left">
+          {hasValue ? formatted : 'Seleccionar fecha y hora'}
+        </span>
+        {hasValue && (
+          <span className="text-[10px] font-black uppercase tracking-wider opacity-70">Cambiar</span>
+        )}
+      </button>
+
+      {/* Input real invisible que dispara el date picker nativo */}
+      <input
+        ref={inputRef}
+        type="datetime-local"
+        value={value}
+        onChange={onChange}
+        required
+        style={{
+          position: 'absolute',
+          top: 0, left: 0,
+          width: '100%', height: '100%',
+          opacity: 0,
+          pointerEvents: 'none',
+        }}
+        tabIndex={-1}
+      />
+    </div>
+  );
+}
+
 // ─── Main Form ────────────────────────────────────────────────────────────────
 function MainForm({ formData, update, subcategories, error, loading, handleSubmit }) {
   return (
@@ -794,14 +946,23 @@ function MainForm({ formData, update, subcategories, error, loading, handleSubmi
       <SectionDivider icon={MapPin} title="Ubicación" />
       <div>
         <FieldLabel icon={MapPin}>Dirección exacta (Ubicación donde se realizará el trabajo)</FieldLabel>
-        <MapPicker value={formData.location} onChange={val => update('location', val)} />
+        {/* FIX 1, 2, 3: MapPicker ahora recibe onLocationChange + locationDetails */}
+        <MapPicker
+          value={formData.location}
+          locationDetails={formData.locationDetails || ''}
+          onLocationChange={val => update('location', val)}
+          onDetailsChange={val => update('locationDetails', val)}
+        />
       </div>
 
       <SectionDivider icon={Calendar} title="Fecha y duración" />
       <div>
         <FieldLabel icon={Calendar}>Fecha y Hora requerida</FieldLabel>
-        <LightInput icon={Calendar} type="datetime-local" required
-          value={formData.date} onChange={e => update('date', e.target.value)} />
+        {/* FIX 4: Botón morado con ícono de calendario */}
+        <DateTimeButton
+          value={formData.date}
+          onChange={e => update('date', e.target.value)}
+        />
       </div>
       <div>
         <FieldLabel icon={Clock}>Duración Estimada</FieldLabel>
@@ -858,7 +1019,7 @@ export default function PostTaskPage() {
 
   const [formData, setFormData] = useState({
     title: '', description: '', category: '', subcategory: '',
-    budget: '', location: '', date: '',
+    budget: '', location: '', locationDetails: '', date: '',
     durationHours: '', durationMinutes: '',
     specializationLevel: 'PRINCIPIANTE', specialRequirements: '',
   });
@@ -922,6 +1083,8 @@ export default function PostTaskPage() {
           <p className="text-sm mt-1" style={{ color: '#6b7280' }}>Completa los campos para encontrar al FreeTimer ideal.</p>
         </div>
         <MainForm {...sharedProps} />
+        {/* FIX 6: Rueda de progreso flotante solo en mobile */}
+        <FloatingProgress formData={formData} />
       </div>
 
       {/* ════ DESKTOP (≥ md) ════ */}
@@ -930,7 +1093,6 @@ export default function PostTaskPage() {
         {/* Publicidad izquierda */}
         <div className="hidden lg:flex w-44 xl:w-56 shrink-0 items-center justify-center"
           style={{ borderRight: '1px solid #f3f4f6' }}>
-          
         </div>
 
         {/* Columna central con scroll y barra morada */}
@@ -940,17 +1102,15 @@ export default function PostTaskPage() {
             className="h-full overflow-y-auto pt-6 pb-8"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', paddingLeft: '1.5rem', paddingRight: '2rem' }}
           >
-            {/* Título centrado */}
             <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
               className="text-center mb-7">
               <h1 className="text-2xl font-black tracking-tight" style={{ color: '#111827' }}>Publicar Nueva Tarea</h1>
               <p className="text-sm mt-1" style={{ color: '#6b7280' }}>Completa los campos para encontrar al FreeTimer ideal.</p>
             </motion.div>
 
-            {/* Formulario + paneles sticky laterales */}
             <div className="relative max-w-2xl mx-auto">
 
-              {/* Paneles sticky izquierda — centrados verticalmente con top */}
+              {/* Paneles sticky izquierda */}
               <div className="hidden xl:block absolute -left-48 top-0 bottom-0 w-44" style={{ zIndex: 10 }}>
                 <div className="sticky top-[15vh] flex flex-col gap-3">
                   <ProgressPanel formData={formData} />
@@ -966,12 +1126,10 @@ export default function PostTaskPage() {
                 </div>
               </div>
 
-              {/* Formulario principal */}
               <MainForm {...sharedProps} />
             </div>
           </div>
 
-          {/* Barra de scroll morada animada */}
           <ScrollBar containerRef={scrollRef} />
         </div>
 
