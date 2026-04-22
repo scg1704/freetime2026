@@ -71,13 +71,7 @@ export default function MyTasksPage() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <div className="sticky top-16 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-5 py-4">
-        <div className="flex items-center gap-3 max-w-xl mx-auto">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-700" />
-          </button>
+        <div className="max-w-xl mx-auto">
           <h1 className="text-xl font-bold tracking-tight">Mis Tareas</h1>
         </div>
 

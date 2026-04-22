@@ -1,3 +1,4 @@
+// source/fulltimer/pages/ProfilePage.jsx
 import { User as UserIcon, Shield, Settings, LogOut, Star, Award, ChevronRight, Edit3, ClipboardList } from 'lucide-react';
 import { cn } from '../../shared/lib/utils';
 import { useAuth } from '../../shared/context/AuthContext';
@@ -24,12 +25,14 @@ export default function FulltimerProfilePage() {
               src={user.photoURL || `https://picsum.photos/seed/${user.id}/200`}
               alt="Profile"
               referrerPolicy="no-referrer"
+              className="w-full h-full object-cover"
             />
           </div>
           <button className="absolute -bottom-2 -right-2 p-3 bg-primary text-white rounded-2xl shadow-lg hover:scale-110 transition-transform">
             <Edit3 className="w-5 h-5" />
           </button>
         </div>
+
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
             {user.name} {user.lastName}
@@ -73,7 +76,13 @@ export default function FulltimerProfilePage() {
           label="Mis Tareas"
           onClick={() => navigate('/fulltimer/my-tasks')}
         />
-        <MenuButton icon={<Shield className="text-green-500" />} label="Verificación" sublabel="Completada" />
+        {/* FIX PUNTO 4: navega a /verification al presionar */}
+        <MenuButton
+          icon={<Shield className="text-green-500" />}
+          label="Verificación"
+          sublabel={user.verified ? 'Completada' : 'Pendiente'}
+          onClick={() => navigate('/verification')}
+        />
         <MenuButton icon={<Settings className="text-gray-500" />} label="Opciones" />
         <MenuButton icon={<LogOut className="text-red-500" />} label="Cerrar Sesión" danger onClick={handleLogout} />
       </section>
@@ -94,7 +103,11 @@ function MenuButton({ icon, label, sublabel, danger, onClick }) {
         <div className="p-3 bg-white rounded-2xl shadow-sm border border-gray-50">{icon}</div>
         <div className="text-left">
           <h4 className={cn('font-bold', danger && 'text-red-600')}>{label}</h4>
-          {sublabel && <p className="text-xs text-green-600 font-bold">{sublabel}</p>}
+          {sublabel && (
+            <p className={cn('text-xs font-bold', sublabel === 'Completada' ? 'text-green-600' : 'text-orange-500')}>
+              {sublabel}
+            </p>
+          )}
         </div>
       </div>
       <ChevronRight className={cn('w-5 h-5 transition-transform group-hover:translate-x-1', danger ? 'text-red-300' : 'text-gray-300')} />

@@ -10,7 +10,7 @@ const AUTH_PAGES = ['/', '/login', '/register', '/verification', '/verify-email'
 
 const MAIN_PAGES = [
   '/freetimer/home', '/freetimer/tasks', '/freetimer/payment', '/freetimer/profile',
-  '/fulltimer/home', '/fulltimer/my-tasks', '/fulltimer/payment', '/fulltimer/profile',
+  '/fulltimer/home', '/fulltimer/payment', '/fulltimer/profile',
 ];
 
 const WHITE_GLOW = '0 0 12px rgba(255,255,255,0.55), 0 0 28px rgba(255,255,255,0.25)';
@@ -47,14 +47,9 @@ export default function Layout({ children }) {
       <header className="fixed top-0 left-0 right-0 h-16 bg-primary flex items-center px-4 z-50">
         <div className="w-10">
           {!isMainPage && (
-            <TopBarButton>
-              <button
-                onClick={() => navigate(-1)}
-                aria-label="Volver"
-                className="p-2 transition-transform hover:scale-110"
-              >
-                <ArrowLeft className="w-6 h-6 text-white cursor-pointer" />
-              </button>
+            // FIX: usar TopBarButton solo como contenedor visual; el botón real es el hijo
+            <TopBarButton onClick={() => navigate(-1)}>
+              <ArrowLeft className="w-6 h-6 text-white cursor-pointer" />
             </TopBarButton>
           )}
         </div>
@@ -108,21 +103,32 @@ export default function Layout({ children }) {
   );
 }
 
+// FIX BUGS 2 & 3: TopBarButton ahora es motion.div, no motion.button.
+// Antes era motion.button envolviendo un <button> hijo → nesting inválido en HTML.
+// Con motion.div el contenedor es semánticamente neutro y puede contener
+// cualquier elemento, incluyendo botones.
 function TopBarButton({ children, onClick }) {
   const [hovered, setHovered] = useState(false);
+
   return (
-    <motion.button
+    <motion.div
+      role="button"
+      tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
+      onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
       animate={hovered ? { scale: 1.15 } : { scale: 1 }}
       transition={{ type: 'spring', stiffness: 380, damping: 22 }}
       className="flex items-center gap-1 text-white p-1"
-      style={{ filter: hovered ? 'drop-shadow(0 0 6px rgba(255,255,255,0.7))' : 'none',
-               transition: 'filter 0.18s' }}
+      style={{
+        filter: hovered ? 'drop-shadow(0 0 6px rgba(255,255,255,0.7))' : 'none',
+        transition: 'filter 0.18s',
+        cursor: onClick ? 'pointer' : 'default',
+      }}
     >
       {children}
-    </motion.button>
+    </motion.div>
   );
 }
 
@@ -160,24 +166,16 @@ function NavItem({ to, icon, label, active }) {
             'w-5 h-5 transition-colors duration-200',
             active ? 'text-primary' : 'text-white'
           ),
-          strokeWidth: active ? 2.5 : 1.8,
         })}
       </motion.div>
-
-      <motion.span
-        animate={active ? { opacity: 1 } : { opacity: hovered ? 1 : 0.65 }}
-        transition={{ duration: 0.18 }}
-        style={{
-          filter: showGlow ? 'drop-shadow(0 0 5px rgba(255,255,255,0.7))' : 'none',
-          transition: 'filter 0.18s',
-        }}
+      <span
         className={cn(
-          'text-[10px] uppercase tracking-wider',
-          active ? 'text-white font-bold' : 'text-white font-medium'
+          'text-[10px] font-bold uppercase tracking-wider transition-colors duration-200',
+          active ? 'text-white' : 'text-white/60'
         )}
       >
         {label}
-      </motion.span>
+      </span>
     </Link>
   );
 }

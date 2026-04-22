@@ -5,6 +5,8 @@ import {
   FileText, Tag, Clock, Star, ChevronDown, AlertCircle,
   Sparkles, Shield, Users, Zap, CheckCircle2, Search, X,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../shared/context/AuthContext';
 
 // ─── Utils ────────────────────────────────────────────────────────────────────
 function cn(...classes) { return classes.filter(Boolean).join(' '); }
@@ -1016,6 +1018,9 @@ export default function PostTaskPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
   const scrollRef = useRef(null);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [published, setPublished] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '', description: '', category: '', subcategory: '',
@@ -1059,12 +1064,15 @@ export default function PostTaskPage() {
     try {
       const res = await fetch('/api/tasks', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.token}`,
+        },
         body: JSON.stringify({ ...formData, budget: Number(formData.budget), estimatedDuration: totalMinutes }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.message || 'Error al publicar la tarea.'); return; }
-      alert('¡Tarea publicada!');
+      setPublished(true);
     } catch {
       setError('Error de conexión. Intenta de nuevo.');
     } finally {
@@ -1073,6 +1081,44 @@ export default function PostTaskPage() {
   };
 
   const sharedProps = { formData, update, subcategories, error, loading, handleSubmit };
+
+  if (published) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: '#fff' }}>
+        <motion.div
+          initial={{ scale: 0.7, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 18 }}
+          className="flex flex-col items-center gap-5"
+        >
+          {/* Círculo con checkmark */}
+          <div className="w-24 h-24 rounded-full flex items-center justify-center"
+            style={{ background: '#f3e8ff' }}>
+            <CheckCircle2 className="w-12 h-12" style={{ color: '#7D27BE' }} />
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-2xl font-black" style={{ color: '#111827' }}>
+              ¡Publicación exitosa!
+            </h2>
+            <p className="text-sm font-medium" style={{ color: '#6b7280' }}>
+              Tu tarea ya está disponible para los FreeTimmers.<br />
+              Podrás verla en "Mis Tareas" y en tu historial.
+            </p>
+          </div>
+
+          <div className="w-full max-w-xs pt-2">
+            <button
+              onClick={() => navigate('/fulltimer/home')}
+              className="w-full py-3.5 rounded-2xl font-bold text-sm text-white transition-all active:scale-95 bg-primary hover:bg-[#5c178e]"
+            >
+              Aceptar
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <>

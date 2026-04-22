@@ -58,9 +58,7 @@ export default function TaskHistoryPage() {
         if (!res.ok) throw new Error('API error');
         const data = await res.json();
         // Historial: todo excepto OPEN sin freetimer asignado
-        const history = (data.tasks || []).filter(
-          (t) => t.status !== 'OPEN' || t.freetimerId
-        );
+        const history = data.tasks || [];
         setTasks(history);
       } catch {
         setApiError(true);
@@ -73,7 +71,9 @@ export default function TaskHistoryPage() {
 
   const filtered = activeTab === 'ALL'
     ? tasks
-    : tasks.filter((t) => t.status === activeTab);
+    : activeTab === 'ACTIVE'
+      ? tasks.filter((t) => t.status === 'ACTIVE' || t.status === 'OPEN')
+      : tasks.filter((t) => t.status === activeTab);
 
   if (selectedTask) {
     return (
@@ -89,12 +89,6 @@ export default function TaskHistoryPage() {
       {/* Header */}
       <div className="sticky top-16 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-5 py-4">
         <div className="flex items-center gap-3 max-w-xl mx-auto">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-700" />
-          </button>
           <h1 className="text-xl font-bold tracking-tight">Historial de Tareas</h1>
         </div>
 
@@ -103,7 +97,9 @@ export default function TaskHistoryPage() {
           {TABS.map((tab) => {
             const count = tab.key === 'ALL'
               ? tasks.length
-              : tasks.filter((t) => t.status === tab.key).length;
+              : tab.key === 'ACTIVE'
+                ? tasks.filter((t) => t.status === 'ACTIVE' || t.status === 'OPEN').length
+                : tasks.filter((t) => t.status === tab.key).length;
             return (
               <button
                 key={tab.key}
