@@ -167,7 +167,7 @@ function DurationPicker({ hours, minutes, onHoursChange, onMinutesChange }) {
           </AnimatePresence>
         </div>
 
-        <div className="pb-[18px] text-2xl font-black select-none" style={{ color: '#d1d5db' }}>:</div>
+        <div className="pb-18px text-2xl font-black select-none" style={{ color: '#d1d5db' }}>:</div>
 
         <div className="flex-1">
           <p className="text-[11px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Minutos (0-59)</p>
@@ -903,12 +903,12 @@ function DateTimeButton({ value, onChange }) {
 }
 
 // ─── Main Form ────────────────────────────────────────────────────────────────
-function MainForm({ formData, update, subcategories, error, loading, handleSubmit }) {
+function MainForm({ formData, update, subcategories, error, loading, handleSubmit, isUrgent, errorRef }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <AnimatePresence>
         {error && (
-          <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+          <motion.div ref={errorRef} initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             className="p-4 rounded-2xl text-sm font-bold flex items-center gap-2"
             style={{ background: '#fef2f2', color: '#dc2626', border: '1.5px solid #fecaca' }}>
             <AlertCircle className="w-4 h-4 shrink-0" /> {error}
@@ -965,7 +965,22 @@ function MainForm({ formData, update, subcategories, error, loading, handleSubmi
           value={formData.date}
           onChange={e => update('date', e.target.value)}
         />
+
+        {isUrgent && (
+          <div className="flex items-center gap-1.5 mt-1.5">
+            <span
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold"
+              style={{ background: '#fef3c7', color: '#d97706' }}
+            >
+              ⚡ Urgente
+            </span>
+            <span className="text-xs" style={{ color: '#9ca3af' }}>
+              Esta tarea se realizará en menos de 24 horas
+            </span>
+          </div>
+        )}
       </div>
+      
       <div>
         <FieldLabel icon={Clock}>Duración Estimada</FieldLabel>
         <DurationPicker
@@ -1018,6 +1033,7 @@ export default function PostTaskPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
   const scrollRef = useRef(null);
+  const errorRef = useRef(null);
   const { user } = useAuth();
   const navigate = useNavigate();
   const [published, setPublished] = useState(false);
@@ -1045,7 +1061,15 @@ export default function PostTaskPage() {
     if (!formData.category)                 return 'La categoría es requerida.';
     if (!formData.subcategory)              return 'La subcategoría es requerida.';
     if (!formData.location.trim())          return 'La ubicación es requerida.';
-    if (!formData.date)                     return 'La fecha y hora son requeridas.';
+    if (!formData.date) return 'La fecha y hora son requeridas.';
+    const selectedDate = new Date(formData.date);
+    const now = new Date();
+    const minAllowed = new Date(now.getTime() + 2 * 60 * 60 * 1000); // +2 horas
+    if (selectedDate < minAllowed) {
+      const minStr = minAllowed.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+      const minDay = minAllowed.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+      return `La fecha debe ser al menos 2 horas desde ahora. Mínimo permitido: ${minDay} a las ${minStr}.`;
+    }
     const h = Number(formData.durationHours  || 0);
     const m = Number(formData.durationMinutes || 0);
     if (h < 0 || h > 23)                   return 'Las horas deben estar entre 0 y 23.';
@@ -1058,7 +1082,14 @@ export default function PostTaskPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const err = validate();
-    if (err) { setError(err); return; }
+    if (err) {
+      setError(err);
+      // Scroll al error con un pequeño delay para que React lo renderice primero
+      setTimeout(() => {
+        errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+      return;
+    }
     setLoading(true); setError('');
     const totalMinutes = Number(formData.durationHours || 0) * 60 + Number(formData.durationMinutes || 0);
     try {
@@ -1080,11 +1111,19 @@ export default function PostTaskPage() {
     }
   };
 
-  const sharedProps = { formData, update, subcategories, error, loading, handleSubmit };
+  const isUrgent = (() => {
+    if (!formData.date) return false;
+    const selected = new Date(formData.date);
+    const now = new Date();
+    const hoursAhead = (selected - now) / (1000 * 60 * 60);
+    return hoursAhead >= 2 && hoursAhead <= 24;
+  })();
+
+  const sharedProps = { formData, update, subcategories, error, loading, handleSubmit, isUrgent, errorRef };
 
   if (published) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: '#fff' }}>
+      <div className="fixed inset-0 flex flex-col items-center justify-center px-6 text-center bg-white z-50 overflow-hidden">
         <motion.div
           initial={{ scale: 0.7, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -1092,8 +1131,10 @@ export default function PostTaskPage() {
           className="flex flex-col items-center gap-5"
         >
           {/* Círculo con checkmark */}
-          <div className="w-24 h-24 rounded-full flex items-center justify-center"
-            style={{ background: '#f3e8ff' }}>
+          <div 
+            className="w-24 h-24 rounded-full flex items-center justify-center"
+            style={{ background: '#f3e8ff' }}
+          >
             <CheckCircle2 className="w-12 h-12" style={{ color: '#7D27BE' }} />
           </div>
 
@@ -1110,7 +1151,7 @@ export default function PostTaskPage() {
           <div className="w-full max-w-xs pt-2">
             <button
               onClick={() => navigate('/fulltimer/home')}
-              className="w-full py-3.5 rounded-2xl font-bold text-sm text-white transition-all active:scale-95 bg-primary hover:bg-[#5c178e]"
+              className="w-full py-3.5 rounded-2xl font-bold text-sm text-white transition-all active:scale-95 bg-primary hover:bg-[#5c178e] cursor-pointer"
             >
               Aceptar
             </button>
