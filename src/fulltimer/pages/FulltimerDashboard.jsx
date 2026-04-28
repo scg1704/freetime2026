@@ -165,7 +165,7 @@ export default function FulltimerDashboard() {
   const DesktopLayout = () => (
     <div className="flex h-[calc(100vh-9rem)] overflow-hidden">
       {/* Columna lateral izquierda — solo xl+, reservada para anuncios */}
-      <div className="hidden xl:block w-48 shrink-0" />
+      <div className="hidden lg:flex w-44 xl:w-56 shrink-0" style={{ borderRight: '1px solid #f3f4f6' }} />
 
       <div className="flex flex-col flex-1 px-5 pt-5 pb-5 gap-5 min-w-0 overflow-hidden">
 
@@ -312,7 +312,7 @@ export default function FulltimerDashboard() {
       </div>
 
       {/* Columna lateral derecha — solo xl+ */}
-      <div className="hidden xl:block w-48 shrink-0" />
+      <div className="hidden lg:flex w-44 xl:w-56 shrink-0" style={{ borderLeft: '1px solid #f3f4f6' }} />
     </div>
   );
 

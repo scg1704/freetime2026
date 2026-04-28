@@ -2,20 +2,19 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Phone, CheckCircle2, AlertCircle, Loader2, ShieldCheck } from 'lucide-react';
+import { Phone, CheckCircle2, AlertCircle, Loader2, ShieldCheck } from 'lucide-react';
 
 const PRIMARY = '#7D27BE';
 
-// ─── Simulación de API Nequi ────────────────────────────────────────────────
+// ─── Simulación de API Nequi ─────────────────────────────────────────────────
 // Nequi ofrece una API REST oficial (api.nequi.com.co) que requiere:
-//   - Client ID + Client Secret (obtenidos en el portal de desarrolladores de Nequi)
+//   - Client ID + Client Secret (portal de desarrolladores de Nequi)
 //   - OAuth2 para obtener access_token
 //   - Endpoint POST /payments/v2/-/transfers/-/debitintents para débitos
 // Por ahora se simula el flujo completo de vinculación.
 async function simulateNequiLink(phoneNumber) {
-  await new Promise(r => setTimeout(r, 2000)); // simula latencia de red
+  await new Promise(r => setTimeout(r, 2000));
 
-  // Números que "fallan" para demo
   if (phoneNumber === '3000000000') {
     throw new Error('Número no registrado en Nequi');
   }
@@ -63,19 +62,13 @@ export default function AddNequiPage() {
       {/* Columna izquierda */}
       <div className="hidden lg:flex w-44 xl:w-56 shrink-0" style={{ borderRight: '1px solid #f3f4f6' }} />
 
-      {/* Contenido central */}
+      {/* Contenido central — centrado vertical y horizontal */}
       <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
-        <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
-          <div className="px-5 py-6 max-w-2xl mx-auto space-y-6">
+        <div className="flex-1 overflow-y-auto flex items-center justify-center" style={{ scrollbarWidth: 'none' }}>
+          <div className="w-full px-5 py-6 max-w-md mx-auto space-y-6">
 
-            {/* Header */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate('/fulltimer/payment')}
-                className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors cursor-pointer shrink-0"
-              >
-                <ArrowLeft className="w-4 h-4" style={{ color: '#4b5563' }} />
-              </button>
+            {/* Título centrado, sin flecha */}
+            <div className="text-center">
               <h1 className="text-2xl font-black tracking-tight" style={{ color: '#111827' }}>
                 Añadir Nequi
               </h1>
@@ -83,7 +76,7 @@ export default function AddNequiPage() {
 
             <AnimatePresence mode="wait">
 
-              {/* ── Formulario ── */}
+              {/* ── Formulario / Error ── */}
               {(step === 'form' || step === 'error') && (
                 <motion.div
                   key="form"
@@ -100,7 +93,9 @@ export default function AddNequiPage() {
                   >
                     <ShieldCheck className="w-5 h-5 mt-0.5 shrink-0" style={{ color: PRIMARY }} />
                     <div>
-                      <p className="text-sm font-bold" style={{ color: PRIMARY }}>Conexión segura con Nequi</p>
+                      <p className="text-sm font-bold" style={{ color: PRIMARY }}>
+                        Conexión segura con Nequi
+                      </p>
                       <p className="text-xs mt-0.5" style={{ color: '#6b7280' }}>
                         Tu número será vinculado para recibir y enviar pagos dentro de FreeTime.
                         Usamos la API oficial de Nequi — nunca almacenamos tu PIN.
@@ -108,9 +103,12 @@ export default function AddNequiPage() {
                     </div>
                   </div>
 
-                  {/* Campo de teléfono */}
+                  {/* Campo teléfono */}
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest" style={{ color: '#4b5563' }}>
+                    <label
+                      className="block text-xs font-bold uppercase tracking-widest text-center"
+                      style={{ color: '#4b5563' }}
+                    >
                       Número de celular Nequi
                     </label>
                     <div className="relative">
@@ -137,12 +135,12 @@ export default function AddNequiPage() {
                         onBlur={e => (e.target.style.borderColor = step === 'error' ? '#fca5a5' : '#e5e7eb')}
                       />
                     </div>
-                    <p className="text-xs" style={{ color: '#9ca3af' }}>
+                    <p className="text-xs text-center" style={{ color: '#9ca3af' }}>
                       Debe ser el número registrado en tu cuenta Nequi (empieza por 3)
                     </p>
                   </div>
 
-                  {/* Error */}
+                  {/* Mensaje de error */}
                   {step === 'error' && (
                     <motion.div
                       initial={{ opacity: 0, y: 4 }}
@@ -159,13 +157,13 @@ export default function AddNequiPage() {
                   <button
                     onClick={handleSubmit}
                     disabled={!isValid}
-                    className="w-full py-3.5 rounded-2xl font-bold text-sm text-white transition-colors cursor-pointer"
+                    className="w-full py-3.5 rounded-2xl font-bold text-sm text-white transition-colors"
                     style={{
-                      background: isValid ? PRIMARY : '#d1d5db',
+                      background: isValid ? PRIMARY : '#7D27BE',
                       cursor: isValid ? 'pointer' : 'not-allowed',
                     }}
-                    onMouseEnter={e => { if (isValid) e.currentTarget.style.background = '#6a1fa3'; }}
-                    onMouseLeave={e => { if (isValid) e.currentTarget.style.background = PRIMARY; }}
+                    onMouseEnter={e => { if (isValid) e.currentTarget.style.background = '#5c178e'; }}
+                    onMouseLeave={e => { if (isValid) e.currentTarget.style.background = isValid ? PRIMARY : '#7D27BE'; }}
                   >
                     Vincular número Nequi
                   </button>
@@ -184,11 +182,15 @@ export default function AddNequiPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="flex flex-col items-center justify-center py-24 space-y-4"
+                  className="flex flex-col items-center justify-center py-24 space-y-4 text-center"
                 >
                   <Loader2 className="w-10 h-10 animate-spin" style={{ color: PRIMARY }} />
-                  <p className="font-bold text-sm" style={{ color: '#4b5563' }}>Conectando con Nequi...</p>
-                  <p className="text-xs" style={{ color: '#9ca3af' }}>Verificando número y vinculando cuenta</p>
+                  <p className="font-bold text-sm" style={{ color: '#4b5563' }}>
+                    Conectando con Nequi...
+                  </p>
+                  <p className="text-xs" style={{ color: '#9ca3af' }}>
+                    Verificando número y vinculando cuenta
+                  </p>
                 </motion.div>
               )}
 
@@ -199,7 +201,7 @@ export default function AddNequiPage() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.25 }}
-                  className="flex flex-col items-center py-12 space-y-6 text-center"
+                  className="flex flex-col items-center space-y-6 text-center"
                 >
                   <motion.div
                     initial={{ scale: 0 }}
@@ -212,12 +214,15 @@ export default function AddNequiPage() {
                   </motion.div>
 
                   <div className="space-y-1">
-                    <h2 className="text-xl font-black" style={{ color: '#111827' }}>
+                    <h2 className="text-2xl font-black" style={{ color: '#111827' }}>
                       ¡Nequi vinculado!
                     </h2>
                     <p className="text-sm" style={{ color: '#6b7280' }}>
-                      Tu número <span className="font-bold" style={{ color: PRIMARY }}>{result.maskedNumber}</span> quedó
-                      asociado a tu cuenta FreeTime.
+                      Tu número{' '}
+                      <span className="font-bold" style={{ color: PRIMARY }}>
+                        {result.maskedNumber}
+                      </span>{' '}
+                      quedó asociado a tu cuenta FreeTime.
                     </p>
                     <p className="text-xs mt-1" style={{ color: '#9ca3af' }}>
                       ID de cuenta: {result.accountId}
@@ -238,9 +243,9 @@ export default function AddNequiPage() {
                   <button
                     onClick={() => navigate('/fulltimer/payment')}
                     className="w-full py-3.5 rounded-2xl font-bold text-sm text-white cursor-pointer transition-colors"
-                    style={{ background: PRIMARY }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#6a1fa3')}
-                    onMouseLeave={e => (e.currentTarget.style.background = PRIMARY)}
+                    style={{ background: '#7D27BE' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#5c178e')}
+                    onMouseLeave={e => (e.currentTarget.style.background = '#7D27BE')}
                   >
                     Volver a Mis Pagos
                   </button>
