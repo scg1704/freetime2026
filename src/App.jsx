@@ -1,34 +1,38 @@
-// src/App.jsx
+// source/App.jsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './shared/context/AuthContext';
 
-// Auth
-import LandingPage             from './auth/pages/LandingPage';
-import LoginPage               from './auth/pages/LoginPage';
-import RegisterPage            from './auth/pages/RegisterPage';
-import EmailVerificationPage   from './auth/pages/EmailVerificationPage';
-import VerificationPage        from './auth/pages/VerificationPage';
+// ── Auth ─────────────────────────────────────────────────────────────────────
+import LandingPage            from './auth/pages/LandingPage';
+import LoginPage              from './auth/pages/LoginPage';
+import RegisterPage           from './auth/pages/RegisterPage';
+import EmailVerificationPage  from './auth/pages/EmailVerificationPage';
+import VerificationPage       from './auth/pages/VerificationPage';
 
-// Freetimer
-import FreetimerDashboard   from './freetimer/pages/FreetimerDashboard';
-import FreetimerTasksPage   from './freetimer/pages/TasksPage';
-import TaskDetailsPage      from './freetimer/pages/TaskDetailsPage';
-import TaskExecutionPage    from './freetimer/pages/TaskExecutionPage';
-import FreetimerPaymentPage from './freetimer/pages/PaymentPage';
-import FreetimerProfilePage from './freetimer/pages/ProfilePage';
+// ── Freetimer ────────────────────────────────────────────────────────────────
+import FreetimerDashboard     from './freetimer/pages/FreetimerDashboard';
+import FreetimerTasksPage     from './freetimer/pages/TasksPage';
+import TaskDetailsPage        from './freetimer/pages/TaskDetailsPage';
+import TaskExecutionPage      from './freetimer/pages/TaskExecutionPage';
+import FreetimerPaymentPage   from './freetimer/pages/PaymentPage';
+import FreetimerProfilePage   from './freetimer/pages/ProfilePage';
 
-// Fulltimer
-import FulltimerDashboard   from './fulltimer/pages/FulltimerDashboard';
-import PostTaskPage          from './fulltimer/pages/PostTaskPage';
-import MyTasksPage           from './fulltimer/pages/MyTasksPage';
-import ApplicantsPage        from './fulltimer/pages/ApplicantsPage';
-import TaskHistoryPage       from './fulltimer/pages/TaskHistoryPage';
-import FulltimerPaymentPage  from './fulltimer/pages/PaymentPage';
-import FulltimerProfilePage  from './fulltimer/pages/ProfilePage';
+// ── Fulltimer ────────────────────────────────────────────────────────────────
+import FulltimerDashboard     from './fulltimer/pages/FulltimerDashboard';
+import PostTaskPage           from './fulltimer/pages/PostTaskPage';
+import MyTasksPage            from './fulltimer/pages/MyTasksPage';
+import ApplicantsPage         from './fulltimer/pages/ApplicantsPage';
+import TaskHistoryPage        from './fulltimer/pages/TaskHistoryPage';
+import FulltimerPaymentPage   from './fulltimer/pages/PaymentPage';
+import AddNequiPage           from './fulltimer/pages/AddNequiPage';       // ← nuevo
+import PaymentHistoryPage     from './fulltimer/pages/PaymentHistoryPage'; // ← nuevo
+import FulltimerProfilePage   from './fulltimer/pages/ProfilePage';
 
-import Layout           from './shared/components/Layout';
-import { AuthProvider } from './shared/context/AuthContext';
+// ── Shared ───────────────────────────────────────────────────────────────────
+import Layout                 from './shared/components/Layout';
+import { AuthProvider }       from './shared/context/AuthContext';
 
+// ─── Pantalla de carga ───────────────────────────────────────────────────────
 function LoadingScreen() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
@@ -37,6 +41,7 @@ function LoadingScreen() {
   );
 }
 
+// ─── Guards de ruta ──────────────────────────────────────────────────────────
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <LoadingScreen />;
@@ -78,39 +83,45 @@ function SessionRoute({ children }) {
   return children;
 }
 
+// ─── App ─────────────────────────────────────────────────────────────────────
 export default function App() {
   return (
     <AuthProvider>
       <Router>
         <Layout>
           <Routes>
-            {/* Públicas */}
+
+            {/* ── Públicas ──────────────────────────────────────────────── */}
             <Route path="/"         element={<PublicRoute><LandingPage /></PublicRoute>} />
             <Route path="/login"    element={<PublicRoute><LoginPage /></PublicRoute>} />
             <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
 
-            {/* Verificación */}
-            <Route path="/verify-email"  element={<EmailVerifyRoute><EmailVerificationPage /></EmailVerifyRoute>} />
-            <Route path="/verification"  element={<SessionRoute><VerificationPage /></SessionRoute>} />
+            {/* ── Verificación ──────────────────────────────────────────── */}
+            <Route path="/verify-email" element={<EmailVerifyRoute><EmailVerificationPage /></EmailVerifyRoute>} />
+            <Route path="/verification" element={<SessionRoute><VerificationPage /></SessionRoute>} />
 
-            {/* Freetimer */}
-            <Route path="/freetimer/home"               element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerDashboard /></ProtectedRoute>} />
-            <Route path="/freetimer/tasks"              element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerTasksPage /></ProtectedRoute>} />
-            <Route path="/freetimer/task/:taskId"       element={<ProtectedRoute requiredRole="FREETIMER"><TaskDetailsPage /></ProtectedRoute>} />
-            <Route path="/freetimer/execution/:taskId"  element={<ProtectedRoute requiredRole="FREETIMER"><TaskExecutionPage /></ProtectedRoute>} />
-            <Route path="/freetimer/payment"            element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerPaymentPage /></ProtectedRoute>} />
-            <Route path="/freetimer/profile"            element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerProfilePage /></ProtectedRoute>} />
+            {/* ── Freetimer ─────────────────────────────────────────────── */}
+            <Route path="/freetimer/home"            element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerDashboard /></ProtectedRoute>} />
+            <Route path="/freetimer/tasks"           element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerTasksPage /></ProtectedRoute>} />
+            <Route path="/freetimer/task/:taskId"    element={<ProtectedRoute requiredRole="FREETIMER"><TaskDetailsPage /></ProtectedRoute>} />
+            <Route path="/freetimer/execution/:taskId" element={<ProtectedRoute requiredRole="FREETIMER"><TaskExecutionPage /></ProtectedRoute>} />
+            <Route path="/freetimer/payment"         element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerPaymentPage /></ProtectedRoute>} />
+            <Route path="/freetimer/profile"         element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerProfilePage /></ProtectedRoute>} />
 
-            {/* Fulltimer */}
-            <Route path="/fulltimer/home"                     element={<ProtectedRoute requiredRole="FULLTIMER"><FulltimerDashboard /></ProtectedRoute>} />
-            <Route path="/fulltimer/post-task"                element={<ProtectedRoute requiredRole="FULLTIMER"><PostTaskPage /></ProtectedRoute>} />
-            <Route path="/fulltimer/my-tasks"                 element={<ProtectedRoute requiredRole="FULLTIMER"><MyTasksPage /></ProtectedRoute>} />
-            <Route path="/fulltimer/task-history"             element={<ProtectedRoute requiredRole="FULLTIMER"><TaskHistoryPage /></ProtectedRoute>} />
-            <Route path="/fulltimer/task/:taskId/applicants"  element={<ProtectedRoute requiredRole="FULLTIMER"><ApplicantsPage /></ProtectedRoute>} />
-            <Route path="/fulltimer/payment"                  element={<ProtectedRoute requiredRole="FULLTIMER"><FulltimerPaymentPage /></ProtectedRoute>} />
-            <Route path="/fulltimer/profile"                  element={<ProtectedRoute requiredRole="FULLTIMER"><FulltimerProfilePage /></ProtectedRoute>} />
+            {/* ── Fulltimer ─────────────────────────────────────────────── */}
+            <Route path="/fulltimer/home"                    element={<ProtectedRoute requiredRole="FULLTIMER"><FulltimerDashboard /></ProtectedRoute>} />
+            <Route path="/fulltimer/post-task"               element={<ProtectedRoute requiredRole="FULLTIMER"><PostTaskPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/my-tasks"                element={<ProtectedRoute requiredRole="FULLTIMER"><MyTasksPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/task-history"            element={<ProtectedRoute requiredRole="FULLTIMER"><TaskHistoryPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/task/:taskId/applicants" element={<ProtectedRoute requiredRole="FULLTIMER"><ApplicantsPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/payment"                 element={<ProtectedRoute requiredRole="FULLTIMER"><FulltimerPaymentPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/payment/add-nequi"       element={<ProtectedRoute requiredRole="FULLTIMER"><AddNequiPage /></ProtectedRoute>} />       {/* ← nuevo */}
+            <Route path="/fulltimer/payment/history"         element={<ProtectedRoute requiredRole="FULLTIMER"><PaymentHistoryPage /></ProtectedRoute>} />  {/* ← nuevo */}
+            <Route path="/fulltimer/profile"                 element={<ProtectedRoute requiredRole="FULLTIMER"><FulltimerProfilePage /></ProtectedRoute>} />
 
+            {/* ── Fallback ──────────────────────────────────────────────── */}
             <Route path="*" element={<Navigate to="/" replace />} />
+
           </Routes>
         </Layout>
       </Router>

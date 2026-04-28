@@ -1,68 +1,141 @@
-import { CreditCard, AlertTriangle, Plus, ChevronRight } from 'lucide-react';
+// source/fulltimer/pages/PaymentPage.jsx
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { CreditCard, Plus } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function FulltimerPaymentPage() {
+  const navigate = useNavigate();
+
+  const [methods] = useState([
+    { id: 1, type: 'Nequi', number: '300 **** 123', isDefault: true },
+  ]);
+
+  const recentPayments = [
+    { id: 1, title: 'Reparación de Grifo',  date: 'Abr 27, 2026',  amount: '-$40.500', status: 'Pagado'    },
+    { id: 2, title: 'Limpieza Apartamento', date: 'Mar 28, 2026', amount: '-$72.000', status: 'Pagado'    },
+    { id: 3, title: 'Paseo de Perro',       date: 'Mar 25, 2026', amount: '-$13.500', status: 'En escrow' },
+  ];
+
   return (
-    <div className="px-6 py-8 space-y-10">
-      <h1 className="text-4xl font-bold tracking-tighter">Mis Pagos</h1>
+    <div className="flex bg-white" style={{ height: 'calc(100vh - 64px - 80px)' }}>
 
-      {/* Métodos de pago */}
-      <section className="space-y-4">
-        <div className="flex justify-between items-center px-1">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500">
-            Métodos de pago
-          </h2>
-          <button className="text-primary text-sm font-bold flex items-center gap-1">
-            <Plus className="w-4 h-4" /> Añadir
-          </button>
-        </div>
-        <div className="space-y-3">
-          <PaymentMethodCard type="Nequi" number="300 **** 123" isDefault />
-          <PaymentMethodCard type="Visa" number="**** 4567" />
-        </div>
-      </section>
+      {/* Columna izquierda */}
+      <div className="hidden lg:flex w-44 xl:w-56 shrink-0" style={{ borderRight: '1px solid #f3f4f6' }} />
 
-      {/* Historial */}
-      <section className="space-y-4">
-        <div className="flex justify-between items-center px-1">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500">
-            Historial de Pagos
-          </h2>
-          <button className="text-primary text-sm font-bold">Ver Todo</button>
-        </div>
-        <div className="bg-gray-50 rounded-[32px] overflow-hidden border border-gray-100">
-          <TransactionItem title="Reparación de Grifo" date="Abr 2, 2026" amount="-$40.500" status="Pagado" />
-          <TransactionItem title="Limpieza Apartamento" date="Mar 28, 2026" amount="-$72.000" status="Pagado" />
-          <TransactionItem title="Paseo de Perro" date="Mar 25, 2026" amount="-$13.500" status="En escrow" />
-        </div>
-      </section>
+      {/* Contenido central */}
+      <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
+        <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
+          <div className="px-5 py-6 max-w-2xl mx-auto space-y-8">
 
-      {/* Reportar fallo */}
-      <button className="w-full bg-red-50 text-red-600 p-6 rounded-3xl flex items-center justify-between group hover:bg-red-100 transition-colors">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-white rounded-2xl shadow-sm">
-            <AlertTriangle className="w-6 h-6" />
+            {/* Título */}
+            <div className="text-center">
+              <h1 className="text-2xl font-black tracking-tight" style={{ color: '#111827' }}>
+                Mis Pagos
+              </h1>
+            </div>
+
+            {/* ── Métodos de pago ── */}
+            <section className="space-y-4">
+              <h2
+                className="text-sm font-bold uppercase tracking-widest text-center -mt-3"
+                style={{ color: '#4b5563' }}
+              >
+                Métodos de pago
+              </h2>
+
+              <PurpleButton
+                icon={<Plus className="w-4 h-4" />}
+                onClick={() => navigate('/fulltimer/payment/add-nequi')}
+              >
+                Añadir método de pago
+              </PurpleButton>
+
+              <AnimatePresence>
+                {methods.length > 0 && (
+                  <div className="space-y-3">
+                    {methods.map((m, i) => (
+                      <motion.div
+                        key={m.id}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.2, delay: i * 0.04 }}
+                      >
+                        <PaymentMethodCard
+                          type={m.type}
+                          number={m.number}
+                          isDefault={m.isDefault}
+                        />
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </AnimatePresence>
+            </section>
+
+            {/* ── Historial de pagos ── */}
+            <section className="space-y-4 -mt-4">
+              <h2
+                className="text-sm font-bold uppercase tracking-widest text-center"
+                style={{ color: '#4b5563' }}
+              >
+                Historial de Pagos
+              </h2>
+
+              <div className="bg-gray-50 rounded-[28px] overflow-hidden border border-gray-100">
+                {recentPayments.map((tx, i) => (
+                  <TransactionItem
+                    key={tx.id}
+                    title={tx.title}
+                    date={tx.date}
+                    amount={tx.amount}
+                    status={tx.status}
+                    isLast={i === recentPayments.length - 1}
+                  />
+                ))}
+              </div>
+
+              <PurpleButton onClick={() => navigate('/fulltimer/payment/history')}>
+                Ver historial de pagos
+              </PurpleButton>
+            </section>
+
           </div>
-          <div className="text-left">
-            <h4 className="font-bold">Reportar Fallo</h4>
-            <p className="text-xs opacity-80">Problemas con el envío de dinero</p>
-          </div>
         </div>
-        <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-      </button>
+      </div>
+
+      {/* Columna derecha */}
+      <div className="hidden lg:flex w-44 xl:w-56 shrink-0" style={{ borderLeft: '1px solid #f3f4f6' }} />
     </div>
+  );
+}
+
+function PurpleButton({ children, icon, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm text-white cursor-pointer transition-colors"
+      style={{ background: '#7D27BE' }}
+      onMouseEnter={e => (e.currentTarget.style.background = '#6a1fa3')}
+      onMouseLeave={e => (e.currentTarget.style.background = '#7D27BE')}
+    >
+      {icon && icon}
+      {children}
+    </button>
   );
 }
 
 function PaymentMethodCard({ type, number, isDefault }) {
   return (
-    <div className="bg-white p-6 rounded-3xl border-2 border-gray-100 flex items-center justify-between hover:border-primary/20 transition-all cursor-pointer">
+    <div className="bg-white p-5 rounded-3xl border-2 border-gray-100 flex items-center justify-between transition-all cursor-default hover:bg-[#7D27BE]/5 hover:border-[#7D27BE]/30">
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center">
-          <CreditCard className="w-6 h-6 text-primary" />
+        <div className="w-11 h-11 bg-gray-50 rounded-2xl flex items-center justify-center">
+          <CreditCard className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h4 className="font-bold">{type}</h4>
-          <p className="text-secondary text-sm">{number}</p>
+          <h4 className="font-bold text-sm" style={{ color: '#111827' }}>{type}</h4>
+          <p className="text-xs" style={{ color: '#6b7280' }}>{number}</p>
         </div>
       </div>
       {isDefault && (
@@ -74,17 +147,35 @@ function PaymentMethodCard({ type, number, isDefault }) {
   );
 }
 
-function TransactionItem({ title, date, amount, status }) {
+function TransactionItem({ title, date, amount, status, isLast }) {
   const isNegative = amount.startsWith('-');
   return (
-    <div className="flex items-center justify-between p-6 border-b border-gray-100 last:border-0 bg-white hover:bg-gray-50 transition-colors">
-      <div>
-        <h4 className="font-bold">{title}</h4>
-        <p className="text-secondary text-xs">{date} • {status}</p>
+    <div
+      className={`flex items-center justify-between px-5 py-4 bg-white transition-all border-2 border-transparent hover:bg-[#7D27BE]/5 hover:border-[#7D27BE]/30 ${
+        !isLast ? 'border-b-gray-100' : ''
+      }`}
+    >
+      <div className="space-y-0.5">
+        <h4 className="font-bold text-sm" style={{ color: '#111827' }}>{title}</h4>
+        <button
+          className="text-xs font-semibold cursor-pointer text-left block"
+          style={{ color: '#7D27BE' }}
+          onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')}
+          onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}
+        >
+          Esteban Perez
+        </button>
+        <p className="text-xs" style={{ color: '#6b7280' }}>
+          {date} · {status}
+        </p>
       </div>
-      <div className="text-right">
-        <div className={`font-bold ${isNegative ? 'text-red-500' : 'text-green-600'}`}>{amount}</div>
-        <div className="text-[10px] font-bold text-secondary uppercase tracking-tighter">Recibo #FT</div>
+      <div className="text-right shrink-0 ml-4">
+        <div className="font-bold text-sm" style={{ color: isNegative ? '#ef4444' : '#16a34a' }}>
+          {amount}
+        </div>
+        <div className="text-[10px] font-bold uppercase tracking-tighter mt-0.5" style={{ color: '#6b7280' }}>
+          Recibo #FT
+        </div>
       </div>
     </div>
   );
