@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../shared/context/AuthContext';
 import { cn } from '../../shared/lib/utils';
+import Tab from '../../shared/components/ui/Tab';
 
 const TABS = [
   { key: 'OPEN',    label: 'Sin postulante' },
@@ -68,134 +69,136 @@ export default function MyTasksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="sticky top-16 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-5 py-4">
-        <div className="max-w-xl mx-auto">
-          <h1 className="text-xl font-bold tracking-tight">Mis Tareas</h1>
+    <div className="flex bg-white" style={{ height: 'calc(100vh - 64px - 80px)' }} >
+
+      {/* Columna izquierda */}
+      <div className="hidden lg:flex w-44 xl:w-56 shrink-0" style={{ borderRight: '1px solid #f3f4f6' }} />
+
+      {/* Contenido central */}
+      <div className="flex-1 min-w-0 flex flex-col h-full">
+
+        {/* Header sticky */}
+        <div className="shrink-0 sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-5 py-4">
+          <div className="max-w-2xl mx-auto text-center">
+            <h1 className="text-2xl font-black tracking-tight" style={{ color: '#111827' }}>
+              Mis Tareas
+            </h1>
+          </div>
+
+          {/* Tabs */}
+          <div className="mt-3 max-w-2xl mx-auto">
+            <div className="flex flex-wrap gap-2 justify-center">
+              {TABS.map((tab) => {
+                const count =
+                  tab.key === 'OPEN'
+                    ? tasks.filter((t) => t.status === 'OPEN' && !(t.applicants > 0)).length
+                    : tasks.filter((t) => t.status === 'PENDING' || (t.status === 'OPEN' && t.applicants > 0)).length;
+                return (
+                  <Tab
+                    key={tab.key}
+                    label={tab.label}
+                    count={count}
+                    active={activeTab === tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                  />
+                );
+              })}
+            </div>
+          </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-2 mt-3 max-w-xl mx-auto">
-          {TABS.map((tab) => {
-            const count =
-              tab.key === 'OPEN'
-                ? tasks.filter((t) => t.status === 'OPEN' && !(t.applicants > 0)).length
-                : tasks.filter((t) => t.status === 'PENDING' || (t.status === 'OPEN' && t.applicants > 0)).length;
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={cn(
-                  'flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all',
-                  activeTab === tab.key
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'bg-gray-100 text-secondary hover:bg-gray-200'
-                )}
-              >
-                {tab.label}
-                <span className={cn(
-                  'text-[10px] font-black px-1.5 py-0.5 rounded-full',
-                  activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-500'
-                )}>
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Lista */}
-      <div className="px-5 py-5 max-w-xl mx-auto space-y-3">
-        {loading ? (
-          [...Array(3)].map((_, i) => (
-            <div key={i} className="bg-gray-50 rounded-3xl p-5 h-28 animate-pulse" />
-          ))
-        ) : apiError ? (
-          <div className="text-center py-16 text-secondary">
-            <p className="font-medium">No se pudo conectar con el servidor.</p>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-16 space-y-3">
-            <p className="text-secondary font-medium">
-              {activeTab === 'OPEN'
-                ? 'No tienes tareas abiertas sin postulantes.'
-                : 'No tienes tareas con postulantes esperando.'}
-            </p>
-            <button
-              onClick={() => navigate('/fulltimer/post-task')}
-              className="text-primary font-bold text-sm hover:underline"
-            >
-              Publicar una tarea →
-            </button>
-          </div>
-        ) : (
-          <AnimatePresence mode="popLayout">
-            {filtered.map((task, i) => {
-              const taskDate = task.date ? new Date(task.date) : null;
-              const hoursUntil = taskDate ? (taskDate - new Date()) / (1000 * 60 * 60) : null;
-              const isUrgent = hoursUntil !== null && hoursUntil >= 0 && hoursUntil <= 24;
-
-              return (
-                <motion.div
-                  key={task.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.22, delay: i * 0.04 }}
-                  onClick={() => setSelectedTask(task)}
-                  className="bg-white border-2 border-gray-100 hover:border-primary/25 hover:shadow-md p-5 rounded-3xl cursor-pointer transition-all group"
+        {/* Lista */}
+        <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
+          <div className="px-5 py-5 pb-6 max-w-2xl mx-auto space-y-3">
+            {loading ? (
+              [...Array(3)].map((_, i) => (
+                <div key={i} className="bg-gray-50 rounded-3xl p-5 h-28 animate-pulse" />
+              ))
+            ) : apiError ? (
+              <div className="text-center py-16 text-secondary">
+                <p className="font-medium">No se pudo conectar con el servidor.</p>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-16 space-y-3">
+                <p className="text-secondary font-medium">
+                  {activeTab === 'OPEN'
+                    ? 'No tienes tareas abiertas sin postulantes.'
+                    : 'No tienes tareas con postulantes esperando.'}
+                </p>
+                <button
+                  onClick={() => navigate('/fulltimer/post-task')}
+                  className="text-primary font-bold text-sm hover:underline"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0 space-y-2">
+                  Publicar una tarea →
+                </button>
+              </div>
+            ) : (
+              <AnimatePresence mode="popLayout">
+                {filtered.map((task, i) => {
+                  const taskDate = task.date ? new Date(task.date) : null;
+                  const hoursUntil = taskDate ? (taskDate - new Date()) / (1000 * 60 * 60) : null;
+                  const isUrgent = hoursUntil !== null && hoursUntil >= 0 && hoursUntil <= 24;
 
-                      {/* Título + badge urgente en la misma línea */}
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-base truncate">{task.title}</h3>
-                        {isUrgent && (
-                          <span
-                            className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black"
-                            style={{ background: '#fef3c7', color: '#d97706' }}
-                          >
-                            ⚡ Urgente
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-3 text-xs text-secondary font-medium flex-wrap">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" /> {task.location}
-                        </span>
-                        {task.date && (
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {new Date(task.date).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })}
-                          </span>
-                        )}
-                      </div>
-
-                      {(task.applicants ?? 0) > 0 && (
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
-                          <Users className="w-3.5 h-3.5" />
-                          {task.applicants} postulante{task.applicants !== 1 ? 's' : ''} esperando
+                  return (
+                    <motion.div
+                      key={task.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.22, delay: i * 0.04 }}
+                      onClick={() => setSelectedTask(task)}
+                      className="bg-white border-2 border-gray-100 hover:border-primary/25 hover:shadow-md p-5 rounded-3xl cursor-pointer transition-all group"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-bold text-base truncate">{task.title}</h3>
+                            {isUrgent && (
+                              <span
+                                className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black"
+                                style={{ background: '#fef3c7', color: '#d97706' }}
+                              >
+                                ⚡ Urgente
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-secondary font-medium flex-wrap">
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" /> {task.location}
+                            </span>
+                            {task.date && (
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {new Date(task.date).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })}
+                              </span>
+                            )}
+                          </div>
+                          {(task.applicants ?? 0) > 0 && (
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
+                              <Users className="w-3.5 h-3.5" />
+                              {task.applicants} postulante{task.applicants !== 1 ? 's' : ''} esperando
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col items-end gap-2 shrink-0">
-                      <span className="text-base font-bold text-primary">
-                        ${task.budget?.toLocaleString()}
-                      </span>
-                      <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-primary transition-colors" />
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        )}
+                        <div className="flex flex-col items-end gap-2 shrink-0">
+                          <span className="text-base font-bold text-primary">
+                            ${task.budget?.toLocaleString()}
+                          </span>
+                          <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-primary transition-colors" />
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* Columna derecha */}
+      <div className="hidden lg:flex w-44 xl:w-56 shrink-0" style={{ borderLeft: '1px solid #f3f4f6' }} />
+
     </div>
   );
 }

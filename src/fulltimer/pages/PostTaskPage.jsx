@@ -1123,7 +1123,7 @@ export default function PostTaskPage() {
 
   if (published) {
     return (
-      <div className="fixed inset-0 flex flex-col items-center justify-center px-6 text-center bg-white z-50 overflow-hidden">
+      <div className="fixed inset-0 flex flex-col items-center justify-center px-6 text-center bg-white overflow-hidden">
         <motion.div
           initial={{ scale: 0.7, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
