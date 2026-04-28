@@ -159,11 +159,11 @@ export default function AddNequiPage() {
                     disabled={!isValid}
                     className="w-full py-3.5 rounded-2xl font-bold text-sm text-white transition-colors"
                     style={{
-                      background: isValid ? PRIMARY : '#7D27BE',
+                      background: isValid ? PRIMARY : '#d1d5db',
                       cursor: isValid ? 'pointer' : 'not-allowed',
                     }}
                     onMouseEnter={e => { if (isValid) e.currentTarget.style.background = '#5c178e'; }}
-                    onMouseLeave={e => { if (isValid) e.currentTarget.style.background = isValid ? PRIMARY : '#7D27BE'; }}
+                    onMouseLeave={e => { if (isValid) e.currentTarget.style.background = isValid ? PRIMARY : '#d1d5db'; }}
                   >
                     Vincular número Nequi
                   </button>
