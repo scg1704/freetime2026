@@ -27,16 +27,16 @@ import FulltimerPaymentPage   from './fulltimer/pages/PaymentPage';
 import AddNequiPage           from './fulltimer/pages/AddNequiPage';
 import PaymentHistoryPage     from './fulltimer/pages/PaymentHistoryPage';
 import FulltimerProfilePage   from './fulltimer/pages/ProfilePage';
-import EditProfilePage        from './fulltimer/pages/EditProfilePage';        // ← nuevo
-import PersonalDataPage       from './fulltimer/pages/PersonalDataPage';       // ← nuevo
-import RatingsPage            from './fulltimer/pages/RatingsPage';            // ← nuevo
-import SettingsPage           from './fulltimer/pages/SettingsPage';           // ← nuevo
+import EditProfilePage        from './fulltimer/pages/EditProfilePage';
+import PersonalDataPage       from './fulltimer/pages/PersonalDataPage';
+import RatingsPage            from './fulltimer/pages/RatingsPage';
+import SettingsPage           from './fulltimer/pages/SettingsPage';
+import MessagesPage           from './fulltimer/pages/MessagesPage';          // ← nuevo
 
 // ── Shared ───────────────────────────────────────────────────────────────────
 import Layout                 from './shared/components/Layout';
 import { AuthProvider }       from './shared/context/AuthContext';
 
-// ─── Pantalla de carga ───────────────────────────────────────────────────────
 function LoadingScreen() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
@@ -45,14 +45,12 @@ function LoadingScreen() {
   );
 }
 
-// ─── Guards de ruta ──────────────────────────────────────────────────────────
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <LoadingScreen />;
   if (user) {
     if (!user.verified) return <Navigate to="/verify-email" replace />;
-    const home = user.role === 'FREETIMER' ? '/freetimer/home' : '/fulltimer/home';
-    return <Navigate to={home} replace />;
+    return <Navigate to={user.role === 'FREETIMER' ? '/freetimer/home' : '/fulltimer/home'} replace />;
   }
   return children;
 }
@@ -63,8 +61,7 @@ function ProtectedRoute({ children, requiredRole }) {
   if (!user) return <Navigate to="/" replace />;
   if (!user.verified) return <Navigate to="/verify-email" replace />;
   if (requiredRole && user.role !== requiredRole) {
-    const home = user.role === 'FREETIMER' ? '/freetimer/home' : '/fulltimer/home';
-    return <Navigate to={home} replace />;
+    return <Navigate to={user.role === 'FREETIMER' ? '/freetimer/home' : '/fulltimer/home'} replace />;
   }
   return children;
 }
@@ -73,10 +70,7 @@ function EmailVerifyRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/" replace />;
-  if (user.verified) {
-    const home = user.role === 'FREETIMER' ? '/freetimer/home' : '/fulltimer/home';
-    return <Navigate to={home} replace />;
-  }
+  if (user.verified) return <Navigate to={user.role === 'FREETIMER' ? '/freetimer/home' : '/fulltimer/home'} replace />;
   return children;
 }
 
@@ -87,7 +81,6 @@ function SessionRoute({ children }) {
   return children;
 }
 
-// ─── App ─────────────────────────────────────────────────────────────────────
 export default function App() {
   return (
     <AuthProvider>
@@ -95,16 +88,16 @@ export default function App() {
         <Layout>
           <Routes>
 
-            {/* ── Públicas ──────────────────────────────────────────────── */}
+            {/* ── Públicas ── */}
             <Route path="/"         element={<PublicRoute><LandingPage /></PublicRoute>} />
             <Route path="/login"    element={<PublicRoute><LoginPage /></PublicRoute>} />
             <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
 
-            {/* ── Verificación ──────────────────────────────────────────── */}
+            {/* ── Verificación ── */}
             <Route path="/verify-email" element={<EmailVerifyRoute><EmailVerificationPage /></EmailVerifyRoute>} />
             <Route path="/verification" element={<SessionRoute><VerificationPage /></SessionRoute>} />
 
-            {/* ── Freetimer ─────────────────────────────────────────────── */}
+            {/* ── Freetimer ── */}
             <Route path="/freetimer/home"               element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerDashboard /></ProtectedRoute>} />
             <Route path="/freetimer/tasks"              element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerTasksPage /></ProtectedRoute>} />
             <Route path="/freetimer/task/:taskId"       element={<ProtectedRoute requiredRole="FREETIMER"><TaskDetailsPage /></ProtectedRoute>} />
@@ -112,7 +105,7 @@ export default function App() {
             <Route path="/freetimer/payment"            element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerPaymentPage /></ProtectedRoute>} />
             <Route path="/freetimer/profile"            element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerProfilePage /></ProtectedRoute>} />
 
-            {/* ── Fulltimer ─────────────────────────────────────────────── */}
+            {/* ── Fulltimer ── */}
             <Route path="/fulltimer/home"                    element={<ProtectedRoute requiredRole="FULLTIMER"><FulltimerDashboard /></ProtectedRoute>} />
             <Route path="/fulltimer/post-task"               element={<ProtectedRoute requiredRole="FULLTIMER"><PostTaskPage /></ProtectedRoute>} />
             <Route path="/fulltimer/my-tasks"                element={<ProtectedRoute requiredRole="FULLTIMER"><MyTasksPage /></ProtectedRoute>} />
@@ -122,12 +115,13 @@ export default function App() {
             <Route path="/fulltimer/payment/add-nequi"       element={<ProtectedRoute requiredRole="FULLTIMER"><AddNequiPage /></ProtectedRoute>} />
             <Route path="/fulltimer/payment/history"         element={<ProtectedRoute requiredRole="FULLTIMER"><PaymentHistoryPage /></ProtectedRoute>} />
             <Route path="/fulltimer/profile"                 element={<ProtectedRoute requiredRole="FULLTIMER"><FulltimerProfilePage /></ProtectedRoute>} />
-            <Route path="/fulltimer/profile/edit"            element={<ProtectedRoute requiredRole="FULLTIMER"><EditProfilePage /></ProtectedRoute>} />         {/* ← nuevo */}
-            <Route path="/fulltimer/profile/personal-data"  element={<ProtectedRoute requiredRole="FULLTIMER"><PersonalDataPage /></ProtectedRoute>} />        {/* ← nuevo */}
-            <Route path="/fulltimer/profile/ratings"        element={<ProtectedRoute requiredRole="FULLTIMER"><RatingsPage /></ProtectedRoute>} />              {/* ← nuevo */}
-            <Route path="/fulltimer/profile/settings"       element={<ProtectedRoute requiredRole="FULLTIMER"><SettingsPage /></ProtectedRoute>} />             {/* ← nuevo */}
+            <Route path="/fulltimer/profile/edit"            element={<ProtectedRoute requiredRole="FULLTIMER"><EditProfilePage /></ProtectedRoute>} />
+            <Route path="/fulltimer/profile/personal-data"   element={<ProtectedRoute requiredRole="FULLTIMER"><PersonalDataPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/profile/ratings"         element={<ProtectedRoute requiredRole="FULLTIMER"><RatingsPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/profile/settings"        element={<ProtectedRoute requiredRole="FULLTIMER"><SettingsPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/messages"                element={<ProtectedRoute requiredRole="FULLTIMER"><MessagesPage /></ProtectedRoute>} />  {/* ← nuevo */}
 
-            {/* ── Fallback ──────────────────────────────────────────────── */}
+            {/* ── Fallback ── */}
             <Route path="*" element={<Navigate to="/" replace />} />
 
           </Routes>
