@@ -90,8 +90,8 @@ export default function FulltimerProfilePage() {
 
               {/* Mobile */}
               <div className="md:hidden space-y-3">
-                <DashboardBtn color="primary" icon={<UserIcon className="w-6 h-6" />}    label="Datos Personales" onClick={() => navigate('/fulltimer/profile/personal-data')} />
-                <DashboardBtn color="primary" icon={<History className="w-6 h-6" />} label="Historial de Tareas"       onClick={() => navigate('/fulltimer/my-tasks')} />
+                <DashboardBtn color="primary" icon={<UserIcon className="w-6 h-6" />}     label="Datos Personales" onClick={() => navigate('/fulltimer/profile/personal-data')} />
+                <DashboardBtn color="primary" icon={<History className="w-6 h-6" />}      label="Historial de Tareas"       onClick={() => navigate('/fulltimer/task-history')} />
                 <DashboardBtn color="gold"    icon={<Star className="w-6 h-6" />}         label="Calificaciones"   onClick={() => navigate('/fulltimer/profile/ratings')} />
                 <DashboardBtn color="green"   icon={<Shield className="w-6 h-6" />}       label="Verificación"     onClick={() => navigate('/verification')} />
                 <DashboardBtn color="gray"    icon={<Settings className="w-6 h-6" />}     label="Opciones"         onClick={() => navigate('/fulltimer/profile/settings')} />
@@ -100,8 +100,8 @@ export default function FulltimerProfilePage() {
 
               {/* Desktop */}
               <div className="hidden md:grid grid-cols-3 gap-4 items-stretch">
-                <DashboardBtnDesktop color="primary" icon={<UserIcon className="w-9 h-9" />}      label="Datos Personales" onClick={() => navigate('/fulltimer/profile/personal-data')} />
-                <DashboardBtnDesktop color="primary" icon={<History className="w-9 h-9" />}  label="Historial de Tareas"       onClick={() => navigate('/fulltimer/my-tasks')} />
+                <DashboardBtnDesktop color="primary" icon={<UserIcon className="w-9 h-9" />}       label="Datos Personales" onClick={() => navigate('/fulltimer/profile/personal-data')} />
+                <DashboardBtnDesktop color="primary" icon={<History className="w-9 h-9" />}        label="Historial de Tareas"       onClick={() => navigate('/fulltimer/task-history')} />
                 <DashboardBtnDesktop color="gold"    icon={<Star className="w-9 h-9" />}           label="Calificaciones"   onClick={() => navigate('/fulltimer/profile/ratings')} />
                 <DashboardBtnDesktop color="green"   icon={<Shield className="w-9 h-9" />}         label="Verificación"     onClick={() => navigate('/verification')} />
                 <DashboardBtnDesktop color="gray"    icon={<Settings className="w-9 h-9" />}       label="Opciones"         onClick={() => navigate('/fulltimer/profile/settings')} />
