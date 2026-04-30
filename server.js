@@ -93,6 +93,6 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 FreeTime API corriendo en http://localhost:${PORT}`);
+app.listen(PORT, () => {
+    console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
