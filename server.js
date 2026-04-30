@@ -12,8 +12,18 @@ dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
+const express = require('express');
+const cors = require('cors');
 const app        = express();
 const PORT       = process.env.PORT || 3001;
+
+app.use(cors({
+  origin: 'https://freetime-app.onrender.com', // Reemplaza con la URL real de tu Front en Render
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
+
+app.use(express.json());
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Proxy trust
