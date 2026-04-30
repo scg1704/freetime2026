@@ -29,28 +29,29 @@ function tooManyRequestsHandler(req, res) {
 //    ráfaga de 10 intentos → inviable para brute-force.
 // ─────────────────────────────────────────────
 export const loginLimiter = rateLimit({
-  windowMs:         15 * 60 * 1000,  // 15 minutos
-  max:              10,               // max requests por ventana
-  standardHeaders:  true,            // Envía headers Retry-After estándar (RateLimit-*)
-  legacyHeaders:    false,
-  handler:          tooManyRequestsHandler,
-  // Identificar por IP (comportamiento por defecto de express-rate-limit)
-  keyGenerator:     (req) => req.ip,
-  // Saltear si la request ya falló antes de llegar al controlador
-  // (ej. JSON malformado), para no penalizar errores de cliente legítimos
-  skip:             (req, res) => res.statusCode === 400,
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: tooManyRequestsHandler,
+  keyGenerator: (req) => req.ip,
+  skip: (req, res) => res.statusCode === 400,
+  // AÑADIR ESTO:
+  validate: { xForwardedForHeader: false }, 
 });
 
 // ─────────────────────────────────────────────
 // 2. Google Login — mismo límite que login manual
 // ─────────────────────────────────────────────
 export const googleLoginLimiter = rateLimit({
-  windowMs:         15 * 60 * 1000,
-  max:              10,
-  standardHeaders:  true,
-  legacyHeaders:    false,
-  handler:          tooManyRequestsHandler,
-  keyGenerator:     (req) => req.ip,
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: tooManyRequestsHandler,
+  keyGenerator: (req) => req.ip,
+  // AÑADIR ESTO:
+  validate: { xForwardedForHeader: false },
 });
 
 // ─────────────────────────────────────────────
@@ -60,17 +61,19 @@ export const googleLoginLimiter = rateLimit({
 //    Máximo 5 registros por hora por IP.
 // ─────────────────────────────────────────────
 export const registerLimiter = rateLimit({
-  windowMs:         60 * 60 * 1000,  // 1 hora
-  max:              5,
-  standardHeaders:  true,
-  legacyHeaders:    false,
-  handler:          (req, res) => {
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
     res.status(429).json({
       message: 'Has creado demasiadas cuentas desde esta red. Intenta de nuevo más tarde.',
       retryAfter: res.getHeader('Retry-After'),
     });
   },
   keyGenerator: (req) => req.ip,
+  // AÑADIR ESTO:
+  validate: { xForwardedForHeader: false },
 });
 
 // ─────────────────────────────────────────────
@@ -80,15 +83,17 @@ export const registerLimiter = rateLimit({
 //    ataques de scraping o flood genérico.
 // ─────────────────────────────────────────────
 export const globalApiLimiter = rateLimit({
-  windowMs:         10 * 60 * 1000,  // 10 minutos
-  max:              200,
-  standardHeaders:  true,
-  legacyHeaders:    false,
-  handler:          (req, res) => {
+  windowMs: 10 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
     res.status(429).json({
       message: 'Demasiadas solicitudes. Por favor espera unos minutos.',
       retryAfter: res.getHeader('Retry-After'),
     });
   },
   keyGenerator: (req) => req.ip,
+  // AÑADIR ESTO:
+  validate: { xForwardedForHeader: false },
 });

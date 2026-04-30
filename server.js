@@ -2,6 +2,8 @@
 import path           from 'path';
 import { fileURLToPath } from 'url';
 import dotenv         from 'dotenv';
+import express from 'express'; 
+import cors from 'cors';    
 import authRoutes     from './api/routes/auth.routes.js';
 import tasksRoutes    from './api/routes/tasks.routes.js';
 import usersRoutes    from './api/routes/users.routes.js';
@@ -11,32 +13,20 @@ dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
-const express = require('express');
-const cors = require('cors');
-const app        = express();
-const PORT       = process.env.PORT || 3001;
+const app = express();
+const cors = cors();
+const PORT = process.env.PORT || 3001;
+
+app.set('trust proxy', 1);
 
 app.use(cors({
-  origin: 'https://freetime-app.onrender.com', // Reemplaza con la URL real de tu Front en Render
+  origin: 'https://freetime-app.onrender.com',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
 
-app.set('trust proxy', 1);
-
 app.use(express.json());
-
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // Límite de 100 peticiones por ventana
-  standardHeaders: true,
-  legacyHeaders: false,
-  // Esta es la propiedad que soluciona el error de validación en Render:
-  validate: { xForwardedForHeader: false }, 
-});
-
-// Aplicar el limitador
-app.use(limiter);
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FIX BUG 1 — Cross-Origin-Opener-Policy para Google OAuth popup
