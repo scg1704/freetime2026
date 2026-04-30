@@ -1,5 +1,4 @@
 // server.js
-import express        from 'express';
 import path           from 'path';
 import { fileURLToPath } from 'url';
 import dotenv         from 'dotenv';
@@ -103,6 +102,6 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en el puerto ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Servidor activo en puerto ${PORT}`);
 });
