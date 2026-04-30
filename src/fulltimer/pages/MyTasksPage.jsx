@@ -1,550 +1,442 @@
 // source/fulltimer/pages/MyTasksPage.jsx
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  ArrowLeft, Users, Clock, MapPin, Calendar,
-  ChevronRight, CheckCircle, XCircle, Star,
-  ShieldCheck, Award, X,
+  MapPin, Calendar, Clock, Tag, Users, Star,
+  ShieldCheck, Check, X, ChevronRight, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { useAuth } from '../../shared/context/AuthContext';
-import { cn } from '../../shared/lib/utils';
 import Tab from '../../shared/components/ui/Tab';
+import { MOCK_TASKS, MOCK_APPLICANTS } from '../../shared/lib/mockTasks';
+import { backHandlers } from '../../shared/components/Layout';
+
+const PRIMARY = '#7D27BE';
 
 const TABS = [
-  { key: 'OPEN',    label: 'Sin postulante' },
-  { key: 'PENDING', label: 'Con postulantes' },
+  { key: 'OPEN',     label: 'Sin postulante'           },
+  { key: 'PENDING',  label: 'Con postulantes'          },
+  { key: 'SELECTED', label: 'Postulante seleccionado'  },
 ];
 
 export default function MyTasksPage() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [apiError, setApiError] = useState(false);
-  const [activeTab, setActiveTab] = useState('OPEN');
-  const [selectedTask, setSelectedTask] = useState(null);
+  const { user }   = useAuth();
+  const navigate   = useNavigate();
+  const location   = useLocation();
 
+  const [activeTab, setActiveTab] = useState('PENDING');
+  const [tasks,     setTasks]     = useState(MOCK_TASKS);
+  const [selected,  setSelected]  = useState(null);
+
+  // Abrir tarea si venimos desde el perfil del freetimer
   useEffect(() => {
-    if (!user) { setLoading(false); return; }
-    const fetchTasks = async () => {
-      try {
-        const res = await fetch('/api/tasks/my-tasks', {
-          headers: { Authorization: `Bearer ${user.token}` },
-        });
-        if (!res.ok) throw new Error('API error');
-        const data = await res.json();
-        // Solo tareas abiertas (sin freetimer aceptado todavía)
-        const open = (data.tasks || []).filter(
-          (t) => t.status === 'OPEN' || t.status === 'PENDING'
-        );
-        setTasks(open);
-      } catch {
-        setApiError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTasks();
-  }, [user]);
+    if (location.state?.openTask) {
+      setSelected(location.state.openTask);
+      // Limpiar el state de la URL para que futuros renders no lo reprocesen
+      window.history.replaceState({}, document.title);
+    }
+  }, []); // Solo al montar — el state viene en el primer render
 
-  const filtered = tasks.filter((t) =>
-    activeTab === 'OPEN'
-      ? t.status === 'OPEN' && !(t.applicants > 0)
-      : t.status === 'PENDING' || (t.status === 'OPEN' && t.applicants > 0)
-  );
+  // Registrar/limpiar el handler de retroceso según si hay tarea abierta
+  useEffect(() => {
+    if (selected) {
+      // Hay detalle abierto: la flecha del Layout debe cerrarlo
+      backHandlers.current = () => setSelected(null);
+    } else {
+      // No hay detalle: la flecha del Layout debe navegar normalmente (navigate(-1))
+      backHandlers.current = null;
+    }
+    // Limpieza al desmontar la página completa
+    return () => { backHandlers.current = null; };
+  }, [selected]);
 
-  if (selectedTask) {
+  const getCount = (key) => {
+    if (key === 'OPEN')     return tasks.filter(t => !t.selectedApplicantId && t.applicants === 0).length;
+    if (key === 'PENDING')  return tasks.filter(t => !t.selectedApplicantId && t.applicants > 0).length;
+    if (key === 'SELECTED') return tasks.filter(t => t.selectedApplicantId).length;
+    return 0;
+  };
+
+  const filtered = tasks.filter(t => {
+    if (activeTab === 'OPEN')     return !t.selectedApplicantId && t.applicants === 0;
+    if (activeTab === 'PENDING')  return !t.selectedApplicantId && t.applicants > 0;
+    if (activeTab === 'SELECTED') return t.selectedApplicantId;
+    return false;
+  });
+
+  // Vista de detalle de tarea
+  if (selected) {
     return (
-      <TaskApplicantsView
-        task={selectedTask}
-        onBack={() => setSelectedTask(null)}
-        onAccepted={(taskId) => {
-          setTasks((prev) => prev.filter((t) => t.id !== taskId));
-          setSelectedTask(null);
+      <TaskDetailPage
+        task={selected}
+        onBack={() => setSelected(null)}
+        onAccept={(taskId, applicantId) => {
+          setTasks(prev => prev.map(t =>
+            t.id === taskId ? { ...t, selectedApplicantId: applicantId } : t
+          ));
+          setSelected(null);
+          setActiveTab('SELECTED');
         }}
-        userToken={user?.token}
+        onRejectApplicant={(taskId, applicantId) => {
+          setTasks(prev => prev.map(t =>
+            t.id === taskId
+              ? { ...t, applicantsList: t.applicantsList.filter(a => a.id !== applicantId), applicants: t.applicants - 1 }
+              : t
+          ));
+          setSelected(prev => ({
+            ...prev,
+            applicantsList: prev.applicantsList.filter(a => a.id !== applicantId),
+            applicants: prev.applicants - 1,
+          }));
+        }}
       />
     );
   }
 
   return (
-    <div className="flex bg-white" style={{ height: 'calc(100vh - 64px - 80px)' }} >
-
-      {/* Columna izquierda */}
+    <div className="flex bg-white" style={{ height: 'calc(100vh - 64px - 80px)' }}>
       <div className="hidden lg:flex w-44 xl:w-56 shrink-0" style={{ borderRight: '1px solid #f3f4f6' }} />
 
-      {/* Contenido central */}
-      <div className="flex-1 min-w-0 flex flex-col h-full">
+      <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
 
-        {/* Header sticky */}
+        {/* Header */}
         <div className="shrink-0 sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-5 py-4">
           <div className="max-w-2xl mx-auto text-center">
-            <h1 className="text-2xl font-black tracking-tight" style={{ color: '#111827' }}>
-              Mis Tareas
-            </h1>
+            <h1 className="text-2xl font-black tracking-tight" style={{ color: '#111827' }}>Mis Tareas</h1>
           </div>
-
-          {/* Tabs */}
           <div className="mt-3 max-w-2xl mx-auto">
             <div className="flex flex-wrap gap-2 justify-center">
-              {TABS.map((tab) => {
-                const count =
-                  tab.key === 'OPEN'
-                    ? tasks.filter((t) => t.status === 'OPEN' && !(t.applicants > 0)).length
-                    : tasks.filter((t) => t.status === 'PENDING' || (t.status === 'OPEN' && t.applicants > 0)).length;
-                return (
-                  <Tab
-                    key={tab.key}
-                    label={tab.label}
-                    count={count}
-                    active={activeTab === tab.key}
-                    onClick={() => setActiveTab(tab.key)}
-                  />
-                );
-              })}
+              {TABS.map(tab => (
+                <Tab
+                  key={tab.key}
+                  label={tab.label}
+                  count={getCount(tab.key)}
+                  active={activeTab === tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                />
+              ))}
             </div>
           </div>
         </div>
 
         {/* Lista */}
         <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
-          <div className="px-5 py-5 pb-6 max-w-2xl mx-auto space-y-3">
-            {loading ? (
-              [...Array(3)].map((_, i) => (
-                <div key={i} className="bg-gray-50 rounded-3xl p-5 h-28 animate-pulse" />
-              ))
-            ) : apiError ? (
-              <div className="text-center py-16 text-secondary">
-                <p className="font-medium">No se pudo conectar con el servidor.</p>
-              </div>
-            ) : filtered.length === 0 ? (
+          <div className="px-5 py-6 max-w-2xl mx-auto space-y-3">
+            {filtered.length === 0 ? (
               <div className="text-center py-16 space-y-3">
-                <p className="text-secondary font-medium">
-                  {activeTab === 'OPEN'
-                    ? 'No tienes tareas abiertas sin postulantes.'
-                    : 'No tienes tareas con postulantes esperando.'}
+                <p className="font-medium" style={{ color: '#6b7280' }}>
+                  {activeTab === 'OPEN'     && 'No tienes tareas sin postulantes.'}
+                  {activeTab === 'PENDING'  && 'No tienes tareas con postulantes pendientes.'}
+                  {activeTab === 'SELECTED' && 'Aún no has seleccionado a ningún postulante.'}
                 </p>
-                <button
-                  onClick={() => navigate('/fulltimer/post-task')}
-                  className="text-primary font-bold text-sm hover:underline"
-                >
+                <button onClick={() => navigate('/fulltimer/post-task')} className="text-primary font-bold text-sm hover:underline">
                   Publicar una tarea →
                 </button>
               </div>
             ) : (
-              <AnimatePresence mode="popLayout">
-                {filtered.map((task, i) => {
-                  const taskDate = task.date ? new Date(task.date) : null;
-                  const hoursUntil = taskDate ? (taskDate - new Date()) / (1000 * 60 * 60) : null;
-                  const isUrgent = hoursUntil !== null && hoursUntil >= 0 && hoursUntil <= 24;
-
-                  return (
-                    <motion.div
-                      key={task.id}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ duration: 0.22, delay: i * 0.04 }}
-                      onClick={() => setSelectedTask(task)}
-                      className="bg-white border-2 border-gray-100 hover:border-primary/25 hover:shadow-md p-5 rounded-3xl cursor-pointer transition-all group"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-base truncate">{task.title}</h3>
-                            {isUrgent && (
-                              <span
-                                className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black"
-                                style={{ background: '#fef3c7', color: '#d97706' }}
-                              >
-                                ⚡ Urgente
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-3 text-xs text-secondary font-medium flex-wrap">
-                            <span className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" /> {task.location}
-                            </span>
-                            {task.date && (
-                              <span className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
-                                {new Date(task.date).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })}
-                              </span>
-                            )}
-                          </div>
-                          {(task.applicants ?? 0) > 0 && (
-                            <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
-                              <Users className="w-3.5 h-3.5" />
-                              {task.applicants} postulante{task.applicants !== 1 ? 's' : ''} esperando
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex flex-col items-end gap-2 shrink-0">
-                          <span className="text-base font-bold text-primary">
-                            ${task.budget?.toLocaleString()}
-                          </span>
-                          <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-primary transition-colors" />
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
+              filtered.map((task, i) => (
+                <TaskCard key={task.id} task={task} index={i} onClick={() => setSelected(task)} />
+              ))
             )}
           </div>
         </div>
       </div>
 
-      {/* Columna derecha */}
       <div className="hidden lg:flex w-44 xl:w-56 shrink-0" style={{ borderLeft: '1px solid #f3f4f6' }} />
-
     </div>
   );
 }
 
-// ── Vista de postulantes de una tarea ────────────────────────────────────────
-function TaskApplicantsView({ task, onBack, onAccepted, userToken }) {
-  const [applicants, setApplicants] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [selectedApplicant, setSelectedApplicant] = useState(null);
-  const [actionLoading, setActionLoading] = useState(null);
+// ─── Tarjeta de tarea ─────────────────────────────────────────────────────────
+function TaskCard({ task, index, onClick }) {
+  const [hovered, setHovered] = useState(false);
+  const isSelected = !!task.selectedApplicantId;
 
-  useEffect(() => {
-    if (!task) return;
-    const fetch_ = async () => {
-      try {
-        const res = await fetch(`/api/tasks/${task.id}/applicants`, {
-          headers: { Authorization: `Bearer ${userToken}` },
-        });
-        const data = await res.json();
-        if (res.ok) setApplicants(data.applicants || []);
-      } catch {
-        setError('No se pudo cargar los postulantes.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetch_();
-  }, [task, userToken]);
-
-  const handleAccept = async (applicantId) => {
-    setActionLoading(applicantId);
-    try {
-      const res = await fetch(`/api/tasks/${task.id}/accept`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${userToken}`,
-        },
-        body: JSON.stringify({ applicantId }),
-      });
-      if (res.ok) onAccepted(task.id);
-    } catch {
-      setError('Error al aceptar el postulante.');
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleReject = (applicantId) => {
-    setApplicants((prev) => prev.filter((a) => a.id !== applicantId));
-  };
-
-  if (selectedApplicant) {
-    return (
-      <ApplicantProfileView
-        applicant={selectedApplicant}
-        onBack={() => setSelectedApplicant(null)}
-        onAccept={handleAccept}
-        onReject={handleReject}
-        actionLoading={actionLoading}
-      />
-    );
-  }
+  const cardStyle = hovered
+    ? { borderColor: `${PRIMARY}40`, background: `${PRIMARY}08` }
+    : { borderColor: isSelected ? '#bbf7d0' : '#f3f4f6', background: isSelected ? '#f0fdf4' : '#fff' };
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 30 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.22 }}
-      className="min-h-screen bg-white"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.22, delay: index * 0.04 }}
+      className="rounded-3xl border-2 overflow-hidden cursor-pointer transition-all duration-200"
+      style={cardStyle}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      {/* Header */}
-      <div className="sticky top-16 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-5 py-4">
-        <div className="flex items-center gap-3 max-w-xl mx-auto">
-          <button onClick={onBack} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
-            <ArrowLeft className="w-5 h-5 text-gray-700" />
-          </button>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight">Postulantes</h1>
-            <p className="text-secondary text-xs">{task.title}</p>
+      <div className="flex items-center justify-between px-5 py-4">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0" style={{ background: '#f3e8ff' }}>
+            <Tag className="w-5 h-5" style={{ color: PRIMARY }} />
           </div>
-        </div>
-      </div>
-
-      <div className="px-5 py-5 max-w-xl mx-auto space-y-4">
-        {/* Info de tarea */}
-        <div className="bg-gray-50 rounded-3xl p-4 border border-gray-100 grid grid-cols-2 gap-2">
-          {[
-            { label: 'Presupuesto', value: `$${task.budget?.toLocaleString()}` },
-            { label: 'Categoría',   value: task.category },
-            { label: 'Ubicación',   value: task.location },
-            { label: 'Nivel',       value: task.specializationLevel },
-          ].map(({ label, value }) => (
-            <div key={label}>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-secondary">{label}</p>
-              <p className="font-bold text-sm">{value}</p>
-            </div>
-          ))}
-        </div>
-
-        {error && (
-          <div className="p-3 bg-red-50 text-red-600 rounded-2xl text-sm font-bold border border-red-100">
-            {error}
-          </div>
-        )}
-
-        {loading ? (
-          [...Array(2)].map((_, i) => (
-            <div key={i} className="bg-gray-50 rounded-3xl p-6 h-32 animate-pulse" />
-          ))
-        ) : applicants.length === 0 ? (
-          <div className="text-center py-12 text-secondary">
-            <Users className="w-10 h-10 mx-auto mb-3 text-gray-200" />
-            <p className="font-medium">Aún no hay postulantes.</p>
-            <p className="text-xs mt-1 text-gray-400">Los FreeTimers comenzarán a postularse pronto.</p>
-          </div>
-        ) : (
-          applicants.map((applicant, i) => (
-            <motion.div
-              key={applicant.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className="bg-white border-2 border-gray-100 rounded-3xl p-5 space-y-4"
-            >
-              {/* Cabecera del postulante */}
-              <div
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => setSelectedApplicant(applicant)}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-gray-200 overflow-hidden shrink-0">
-                    <img
-                      src={`https://picsum.photos/seed/${applicant.id}/100`}
-                      alt={applicant.name}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-bold">{applicant.name} {applicant.lastName}</h4>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <div className="flex items-center gap-1 text-yellow-500">
-                        <Star className="w-3 h-3 fill-current" />
-                        <span className="text-xs font-bold text-gray-700">{applicant.rating?.toFixed(1)}</span>
-                      </div>
-                      {applicant.verified && (
-                        <div className="flex items-center gap-1 text-green-500">
-                          <ShieldCheck className="w-3 h-3" />
-                          <span className="text-xs font-bold">Verificado</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-lg font-bold text-primary">
-                    ${applicant.offeredPrice?.toLocaleString() || task.budget?.toLocaleString()}
-                  </div>
-                  <p className="text-[10px] text-secondary uppercase font-bold">Oferta</p>
-                </div>
-              </div>
-
-              {/* Skills */}
-              {applicant.skills?.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {applicant.skills.slice(0, 4).map((skill, j) => (
-                    <span key={j} className="px-3 py-1 bg-gray-100 text-secondary rounded-full text-xs font-bold">
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* Stats */}
-              <p className="text-xs text-secondary">
-                {applicant.tasksCompleted ?? 0} tareas completadas · {applicant.city}
+          <div className="min-w-0 flex-1">
+            <h4 className="font-bold text-sm truncate" style={{ color: '#111827' }}>{task.title}</h4>
+            <p className="text-xs" style={{ color: '#6b7280' }}>
+              {task.location} · {new Date(task.date).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })}
+            </p>
+            {task.applicants > 0 && (
+              <p className="text-xs font-bold mt-0.5" style={{ color: PRIMARY }}>
+                {task.applicants} postulante{task.applicants !== 1 ? 's' : ''} esperando
               </p>
-
-              {/* Acciones */}
-              <div className="flex gap-2 pt-1">
-                <button
-                  onClick={() => handleReject(applicant.id)}
-                  className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-600 font-bold text-sm hover:bg-red-50 hover:text-red-600 transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <XCircle className="w-4 h-4" /> Rechazar
-                </button>
-                <button
-                  onClick={() => handleAccept(applicant.id)}
-                  disabled={actionLoading === applicant.id}
-                  className="flex-2 py-3 rounded-2xl bg-primary text-white font-bold text-sm hover:opacity-90 transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-primary/20 disabled:opacity-50"
-                >
-                  {actionLoading === applicant.id ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <><CheckCircle className="w-4 h-4" /> Aceptar</>
-                  )}
-                </button>
-              </div>
-
-              {/* Ver perfil */}
-              <button
-                onClick={() => setSelectedApplicant(applicant)}
-                className="w-full text-xs text-primary font-bold hover:underline flex items-center justify-center gap-1"
-              >
-                Ver perfil completo <ChevronRight className="w-3 h-3" />
-              </button>
-            </motion.div>
-          ))
-        )}
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-3 shrink-0 ml-3">
+          <div className="text-right">
+            <div className="font-bold text-sm" style={{ color: PRIMARY }}>${task.budget?.toLocaleString('es-CO')}</div>
+            <div className="text-[10px] font-bold uppercase tracking-tighter" style={{ color: '#9ca3af' }}>Presupuesto</div>
+          </div>
+          <ChevronRight className="w-4 h-4" style={{ color: hovered ? PRIMARY : '#d1d5db' }} />
+        </div>
       </div>
     </motion.div>
   );
 }
 
-// ── Perfil completo del postulante ───────────────────────────────────────────
-function ApplicantProfileView({ applicant, onBack, onAccept, onReject, actionLoading }) {
+// ─── Página de detalle de tarea ───────────────────────────────────────────────
+function TaskDetailPage({ task, onBack, onAccept, onRejectApplicant }) {
+  const navigate = useNavigate();
+  const [applicants,    setApplicants]    = useState(task.applicantsList || MOCK_APPLICANTS);
+  const [actionLoading, setActionLoading] = useState(null);
+  const [accepted,      setAccepted]      = useState(false);
+
+  const handleAccept = async (applicantId) => {
+    setActionLoading(applicantId);
+    await new Promise(r => setTimeout(r, 800));
+    setAccepted(applicantId);
+    setActionLoading(null);
+    setTimeout(() => onAccept(task.id, applicantId), 600);
+  };
+
+  return (
+    <div className="flex bg-white" style={{ height: 'calc(100vh - 64px - 80px)' }}>
+      <div className="hidden lg:flex w-44 xl:w-56 shrink-0" style={{ borderRight: '1px solid #f3f4f6' }} />
+
+      <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
+        <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
+          <div className="px-5 py-6 max-w-2xl mx-auto space-y-6">
+
+            {/* Título */}
+            <div className="text-center">
+              <h1 className="text-2xl font-black tracking-tight" style={{ color: '#111827' }}>{task.title}</h1>
+              <p className="text-sm mt-1" style={{ color: '#6b7280' }}>{task.category}</p>
+            </div>
+
+            {/* Info */}
+            <section className="space-y-3">
+              <h2 className="text-sm font-bold uppercase tracking-widest text-center" style={{ color: '#4b5563' }}>Detalles</h2>
+              <div className="grid grid-cols-2 gap-3">
+                <InfoChip icon={<MapPin   className="w-3.5 h-3.5" />} label="Ubicación" value={task.location} />
+                <InfoChip icon={<Calendar className="w-3.5 h-3.5" />} label="Fecha"     value={new Date(task.date).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })} />
+                <InfoChip icon={<Tag      className="w-3.5 h-3.5" />} label="Categoría" value={task.category} />
+                <InfoChip icon={<Clock    className="w-3.5 h-3.5" />} label="Nivel"     value={task.specializationLevel} />
+              </div>
+              <div className="rounded-2xl p-4" style={{ background: '#f3e8ff', border: '1px solid #e9d5ff' }}>
+                <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: PRIMARY }}>Presupuesto</p>
+                <p className="text-2xl font-black" style={{ color: '#111827' }}>${task.budget?.toLocaleString('es-CO')}</p>
+              </div>
+            </section>
+
+            {/* Descripción */}
+            <section className="space-y-2">
+              <h2 className="text-sm font-bold uppercase tracking-widest text-center" style={{ color: '#4b5563' }}>Descripción</h2>
+              <p className="text-sm leading-relaxed" style={{ color: '#6b7280' }}>{task.description}</p>
+            </section>
+
+            {/* Mapa */}
+            <section className="space-y-3">
+              <h2 className="text-sm font-bold uppercase tracking-widest text-center" style={{ color: '#4b5563' }}>Dirección</h2>
+              <div className="rounded-3xl overflow-hidden border-2 border-gray-100" style={{ height: 180 }}>
+                <iframe
+                  title="Ubicación de la tarea"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${task.lng - 0.005},${task.lat - 0.005},${task.lng + 0.005},${task.lat + 0.005}&layer=mapnik&marker=${task.lat},${task.lng}`}
+                />
+              </div>
+              <p className="text-xs text-center font-medium" style={{ color: '#6b7280' }}>📍 {task.address}</p>
+            </section>
+
+            {/* Postulantes */}
+            <section className="space-y-3">
+              <h2 className="text-sm font-bold uppercase tracking-widest text-center" style={{ color: '#4b5563' }}>
+                {task.selectedApplicantId ? 'Freetimer Seleccionado' : `Postulantes (${applicants.length})`}
+              </h2>
+
+              {task.selectedApplicantId ? (
+                applicants
+                  .filter(a => a.id === task.selectedApplicantId)
+                  .map(applicant => (
+                    <ApplicantCard
+                      key={applicant.id}
+                      applicant={applicant}
+                      accepted={true}
+                      onViewProfile={() => navigate('/fulltimer/freetimer-profile', {
+                        state: { applicant, fromTask: task },
+                      })}
+                    />
+                  ))
+              ) : (
+                applicants.map((applicant, i) => (
+                  <ApplicantCard
+                    key={applicant.id}
+                    applicant={applicant}
+                    index={i}
+                    loading={actionLoading === applicant.id}
+                    accepted={accepted === applicant.id}
+                    onAccept={() => handleAccept(applicant.id)}
+                    onReject={() => {
+                      setApplicants(prev => prev.filter(a => a.id !== applicant.id));
+                      onRejectApplicant(task.id, applicant.id);
+                    }}
+                    onViewProfile={() => navigate('/fulltimer/freetimer-profile', {
+                      state: { applicant, fromTask: task },
+                    })}
+                  />
+                ))
+              )}
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <div className="hidden lg:flex w-44 xl:w-56 shrink-0" style={{ borderLeft: '1px solid #f3f4f6' }} />
+    </div>
+  );
+}
+
+// ─── Tarjeta de postulante ────────────────────────────────────────────────────
+function ApplicantCard({ applicant, index, loading, accepted, onAccept, onReject, onViewProfile }) {
   const [confirmReject, setConfirmReject] = useState(false);
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 30 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.22 }}
-      className="min-h-screen bg-white"
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.2, delay: (index ?? 0) * 0.05 }}
+      className="rounded-3xl border-2 p-5 space-y-4"
+      style={{ borderColor: accepted ? '#bbf7d0' : '#f3f4f6', background: accepted ? '#f0fdf4' : '#fff' }}
     >
-      {/* Header */}
-      <div className="sticky top-16 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-5 py-4">
-        <div className="flex items-center gap-3 max-w-xl mx-auto">
-          <button onClick={onBack} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
-            <ArrowLeft className="w-5 h-5 text-gray-700" />
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-2xl bg-gray-200 overflow-hidden shrink-0">
+          <img src={`https://picsum.photos/seed/${applicant.id}/100`} alt={applicant.name} className="w-full h-full object-cover" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <button
+            onClick={onViewProfile}
+            className="text-sm font-bold text-left cursor-pointer hover:underline block truncate"
+            style={{ color: PRIMARY }}
+          >
+            {applicant.name} {applicant.lastName}
           </button>
-          <h1 className="text-xl font-bold tracking-tight">Perfil del postulante</h1>
-        </div>
-      </div>
-
-      <div className="px-5 py-6 max-w-xl mx-auto space-y-6">
-        {/* Avatar y datos */}
-        <div className="flex flex-col items-center text-center space-y-3">
-          <div className="w-24 h-24 rounded-[28px] bg-gray-200 overflow-hidden border-4 border-white shadow-lg">
-            <img
-              src={`https://picsum.photos/seed/${applicant.id}/200`}
-              alt={applicant.name}
-              referrerPolicy="no-referrer"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold">{applicant.name} {applicant.lastName}</h2>
-            <p className="text-secondary text-sm">FreeTimer · {applicant.city}</p>
-          </div>
-
-          {/* Stats */}
-          <div className="flex gap-3">
-            <StatPill icon={<Star className="w-4 h-4 fill-current text-yellow-500" />} value={(applicant.rating ?? 5).toFixed(1)} label="Rating" />
-            <StatPill icon={<Award className="w-4 h-4 text-primary" />} value={applicant.tasksCompleted ?? 0} label="Tareas" />
-            {applicant.verified && (
-              <StatPill icon={<ShieldCheck className="w-4 h-4 text-green-500" />} value="Sí" label="Verificado" />
-            )}
-          </div>
-        </div>
-
-        {/* Habilidades */}
-        {applicant.skills?.length > 0 && (
-          <div className="space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">Habilidades</h3>
-            <div className="flex flex-wrap gap-2">
-              {applicant.skills.map((skill, i) => (
-                <span key={i} className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-bold">
-                  {skill}
-                </span>
-              ))}
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+            <div className="flex items-center gap-1">
+              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+              <span className="text-xs font-bold" style={{ color: '#111827' }}>{applicant.rating?.toFixed(1)}</span>
             </div>
-          </div>
-        )}
-
-        {/* Oferta */}
-        <div className="bg-gray-50 rounded-3xl p-5 border border-gray-100 flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-secondary">Oferta del postulante</p>
-            <p className="text-3xl font-bold text-primary mt-1">
-              ${applicant.offeredPrice?.toLocaleString() || '—'}
-            </p>
+            {applicant.verified && (
+              <div className="flex items-center gap-1" style={{ color: '#16a34a' }}>
+                <ShieldCheck className="w-3 h-3" />
+                <span className="text-xs font-bold">Verificado</span>
+              </div>
+            )}
+            <span className="text-xs" style={{ color: '#9ca3af' }}>{applicant.tasksCompleted} tareas</span>
           </div>
         </div>
-
-        {/* Acciones */}
-        <div className="flex gap-3">
-          {confirmReject ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex-1 bg-red-50 rounded-3xl p-4 space-y-3 border border-red-100"
-            >
-              <p className="text-sm font-bold text-red-600 text-center">¿Rechazar este postulante?</p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setConfirmReject(false)}
-                  className="flex-1 py-2.5 rounded-2xl bg-white border border-gray-200 text-gray-700 font-bold text-sm"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={() => { onReject(applicant.id); onBack(); }}
-                  className="flex-1 py-2.5 rounded-2xl bg-red-500 text-white font-bold text-sm"
-                >
-                  Sí, rechazar
-                </button>
-              </div>
-            </motion.div>
-          ) : (
-            <>
-              <button
-                onClick={() => setConfirmReject(true)}
-                className="flex-1 py-4 rounded-3xl bg-gray-100 text-gray-600 font-bold hover:bg-red-50 hover:text-red-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <X className="w-4 h-4" /> Rechazar
-              </button>
-              <button
-                onClick={() => onAccept(applicant.id)}
-                disabled={actionLoading === applicant.id}
-                className="flex-2 py-4 rounded-3xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {actionLoading === applicant.id ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <><CheckCircle className="w-5 h-5" /> Aceptar postulante</>
-                )}
-              </button>
-            </>
-          )}
+        <div className="text-right shrink-0">
+          <div className="font-black text-lg" style={{ color: PRIMARY }}>${applicant.offeredPrice?.toLocaleString('es-CO')}</div>
+          <div className="text-[10px] font-bold uppercase" style={{ color: '#9ca3af' }}>Oferta</div>
         </div>
       </div>
+
+      {applicant.skills?.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {applicant.skills.map((s, i) => (
+            <span key={i} className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: '#f3e8ff', color: PRIMARY }}>
+              {s}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <AnimatePresence>
+        {confirmReject && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="rounded-2xl p-3 space-y-2 overflow-hidden"
+            style={{ background: '#fef2f2', border: '1px solid #fecaca' }}
+          >
+            <p className="text-xs font-bold text-center" style={{ color: '#dc2626' }}>¿Rechazar a {applicant.name}?</p>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmReject(false)} className="flex-1 py-2 rounded-xl text-xs font-bold border-2 border-gray-200 cursor-pointer" style={{ color: '#6b7280' }}>
+                Cancelar
+              </button>
+              <button onClick={onReject} className="flex-1 py-2 rounded-xl text-xs font-bold text-white cursor-pointer" style={{ background: '#ef4444' }}>
+                Sí, rechazar
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {!accepted && !confirmReject && (
+        <div className="flex gap-2">
+          <button
+            onClick={() => setConfirmReject(true)}
+            className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-2xl text-sm font-bold cursor-pointer transition-colors"
+            style={{ background: '#fef2f2', color: '#ef4444' }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#fee2e2')}
+            onMouseLeave={e => (e.currentTarget.style.background = '#fef2f2')}
+          >
+            <X className="w-4 h-4" /> Rechazar
+          </button>
+          <button
+            onClick={onAccept}
+            disabled={loading}
+            className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-2xl text-sm font-bold text-white cursor-pointer transition-colors"
+            style={{ background: PRIMARY, cursor: loading ? 'not-allowed' : 'pointer' }}
+            onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#6a1fa3'; }}
+            onMouseLeave={e => { if (!loading) e.currentTarget.style.background = PRIMARY; }}
+          >
+            {loading
+              ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              : <><Check className="w-4 h-4" /> Aceptar</>
+            }
+          </button>
+        </div>
+      )}
+
+      {accepted && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex items-center justify-center gap-2 py-3 rounded-2xl"
+          style={{ background: '#f0fdf4' }}
+        >
+          <Check className="w-4 h-4" style={{ color: '#16a34a' }} />
+          <span className="text-sm font-bold" style={{ color: '#16a34a' }}>¡Postulante aceptado!</span>
+        </motion.div>
+      )}
     </motion.div>
   );
 }
 
-function StatPill({ icon, value, label }) {
+function InfoChip({ icon, label, value }) {
   return (
-    <div className="bg-gray-50 px-4 py-2.5 rounded-2xl border border-gray-100 flex flex-col items-center gap-0.5">
-      <div className="flex items-center gap-1">
+    <div className="rounded-2xl p-3 space-y-1" style={{ background: '#fafafa', border: '1px solid #f3f4f6' }}>
+      <div className="flex items-center gap-1.5" style={{ color: '#9ca3af' }}>
         {icon}
-        <span className="font-bold text-sm">{value}</span>
+        <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
       </div>
-      <span className="text-[10px] uppercase font-bold text-secondary tracking-wider">{label}</span>
+      <p className="text-xs font-semibold" style={{ color: '#4b5563' }}>{value}</p>
     </div>
   );
 }

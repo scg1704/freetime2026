@@ -12,10 +12,13 @@ import { useAuth } from '../context/AuthContext';
 
 const PRIMARY     = '#7D27BE';
 const AUTH_PAGES  = ['/', '/login', '/register', '/verification', '/verify-email'];
-const MAIN_PAGES  = [
+
+// Páginas raíz donde se oculta la flecha de atrás
+const NO_BACK_PAGES = [
   '/freetimer/home', '/freetimer/tasks', '/freetimer/payment', '/freetimer/profile',
   '/fulltimer/home', '/fulltimer/payment', '/fulltimer/profile',
 ];
+
 const WHITE_GLOW  = '0 0 12px rgba(255,255,255,0.55), 0 0 28px rgba(255,255,255,0.25)';
 
 const SAMPLE_NOTIFICATIONS = [
@@ -34,21 +37,26 @@ const PREMIUM_PERKS = [
 ];
 
 /**
- * Registro global de callbacks de retroceso por página.
- * MessagesPage registra aquí su "cerrar chat" para que Layout lo use.
+ * Registro global de callbacks de retroceso.
+ * Las páginas con navegación interna (ej: detalle de tarea abierto)
+ * registran aquí su handler para que la flecha del Layout lo ejecute
+ * en lugar de llamar a navigate(-1).
  */
 export const backHandlers = { current: null };
 
 function useClickOutside(ref, handler) {
   useEffect(() => {
-    const listener = (e) => { if (!ref.current || ref.current.contains(e.target)) return; handler(); };
+    const listener = (e) => {
+      if (!ref.current || ref.current.contains(e.target)) return;
+      handler();
+    };
     document.addEventListener('mousedown', listener);
     return () => document.removeEventListener('mousedown', listener);
   }, [ref, handler]);
 }
 
 export default function Layout({ children }) {
-  const location = useLocation();
+  const location  = useLocation();
   const navigate  = useNavigate();
   const { user }  = useAuth();
 
@@ -65,10 +73,9 @@ export default function Layout({ children }) {
   const isAuthPage = AUTH_PAGES.includes(location.pathname);
   if (isAuthPage) return <>{children}</>;
 
-  const isMainPage = MAIN_PAGES.includes(location.pathname);
-  const prefix     = user?.role === 'FREETIMER' ? '/freetimer' : '/fulltimer';
-  const homeRoute  = `${prefix}/home`;
-
+  const isNoBackPage  = NO_BACK_PAGES.includes(location.pathname);
+  const prefix        = user?.role === 'FREETIMER' ? '/freetimer' : '/fulltimer';
+  const homeRoute     = `${prefix}/home`;
   const messagesRoute = user?.role === 'FULLTIMER' ? '/fulltimer/messages' : null;
 
   const navLinks = user?.role === 'FREETIMER'
@@ -84,14 +91,33 @@ export default function Layout({ children }) {
         { to: '/fulltimer/profile', icon: <User />,       label: 'Perfil' },
       ];
 
-  // Si la página registró un handler de retroceso propio (ej: cerrar chat),
-  // úsalo; si no, navega hacia atrás normalmente.
   const handleBack = () => {
+    // 1. La página registró un handler interno (ej: cerrar detalle de tarea)
     if (backHandlers.current) {
       backHandlers.current();
-    } else {
-      navigate(-1);
+      return;
     }
+
+    // 2. Volver desde perfil de freetimer → reabrir la tarea en MyTasks
+    if (location.pathname.includes('freetimer-profile')) {
+      navigate('/fulltimer/my-tasks', {
+        state:   { openTask: location.state?.fromTask },
+        replace: true,
+      });
+      return;
+    }
+
+    // 3. Páginas que pueden llegar con un historial contaminado por replace:true
+    //    (ej: my-tasks tras volver del perfil). Navegamos al home explícitamente
+    //    para evitar la entrada "fantasma" que deja el replace en el historial.
+    const EXPLICIT_HOME_PAGES = ['/fulltimer/my-tasks', '/freetimer/my-tasks'];
+    if (EXPLICIT_HOME_PAGES.includes(location.pathname)) {
+      navigate(homeRoute, { replace: true });
+      return;
+    }
+
+    // 4. Caso general
+    navigate(-1);
   };
 
   return (
@@ -101,7 +127,7 @@ export default function Layout({ children }) {
       <header className="fixed top-0 left-0 right-0 h-16 bg-primary flex items-center px-4 z-50">
 
         <div className="w-10">
-          {!isMainPage && (
+          {!isNoBackPage && (
             <TopBarButton onClick={handleBack}>
               <ArrowLeft className="w-6 h-6 text-white cursor-pointer" />
             </TopBarButton>
@@ -120,13 +146,11 @@ export default function Layout({ children }) {
 
         <div className="ml-auto flex items-center gap-3 z-10">
 
-          {/* Premium */}
           <TopBarButton onClick={() => setShowPremium(true)}>
             <Crown className="w-5 h-5 cursor-pointer" />
             <span className="hidden sm:inline text-sm font-medium cursor-pointer">Premium</span>
           </TopBarButton>
 
-          {/* Notificaciones */}
           <div ref={notifRef} className="relative">
             <TopBarButton onClick={() => { setShowNotif(v => !v); if (!showNotif) markAllRead(); }}>
               <div className="relative">
@@ -177,7 +201,6 @@ export default function Layout({ children }) {
             </AnimatePresence>
           </div>
 
-          {/* Mensajes */}
           <TopBarButton onClick={messagesRoute ? () => navigate(messagesRoute) : undefined}>
             <MessageSquare className="w-6 h-6 cursor-pointer" />
           </TopBarButton>

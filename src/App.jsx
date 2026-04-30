@@ -18,24 +18,25 @@ import FreetimerPaymentPage   from './freetimer/pages/PaymentPage';
 import FreetimerProfilePage   from './freetimer/pages/ProfilePage';
 
 // ── Fulltimer ────────────────────────────────────────────────────────────────
-import FulltimerDashboard     from './fulltimer/pages/FulltimerDashboard';
-import PostTaskPage           from './fulltimer/pages/PostTaskPage';
-import MyTasksPage            from './fulltimer/pages/MyTasksPage';
-import ApplicantsPage         from './fulltimer/pages/ApplicantsPage';
-import TaskHistoryPage        from './fulltimer/pages/TaskHistoryPage';
-import FulltimerPaymentPage   from './fulltimer/pages/PaymentPage';
-import AddNequiPage           from './fulltimer/pages/AddNequiPage';
-import PaymentHistoryPage     from './fulltimer/pages/PaymentHistoryPage';
-import FulltimerProfilePage   from './fulltimer/pages/ProfilePage';
-import EditProfilePage        from './fulltimer/pages/EditProfilePage';
-import PersonalDataPage       from './fulltimer/pages/PersonalDataPage';
-import RatingsPage            from './fulltimer/pages/RatingsPage';
-import SettingsPage           from './fulltimer/pages/SettingsPage';
-import MessagesPage           from './fulltimer/pages/MessagesPage';          // ← nuevo
+import FulltimerDashboard       from './fulltimer/pages/FulltimerDashboard';
+import PostTaskPage             from './fulltimer/pages/PostTaskPage';
+import MyTasksPage              from './fulltimer/pages/MyTasksPage';
+import ApplicantsPage           from './fulltimer/pages/ApplicantsPage';
+import TaskHistoryPage          from './fulltimer/pages/TaskHistoryPage';
+import FulltimerPaymentPage     from './fulltimer/pages/PaymentPage';
+import AddNequiPage             from './fulltimer/pages/AddNequiPage';
+import PaymentHistoryPage       from './fulltimer/pages/PaymentHistoryPage';
+import FulltimerProfilePage     from './fulltimer/pages/ProfilePage';
+import EditProfilePage          from './fulltimer/pages/EditProfilePage';
+import PersonalDataPage         from './fulltimer/pages/PersonalDataPage';
+import RatingsPage              from './fulltimer/pages/RatingsPage';
+import SettingsPage             from './fulltimer/pages/SettingsPage';
+import MessagesPage             from './fulltimer/pages/MessagesPage';
+import FreetimeProfileViewPage  from './fulltimer/pages/FreetimeProfileViewPage'; // ← nuevo
 
 // ── Shared ───────────────────────────────────────────────────────────────────
-import Layout                 from './shared/components/Layout';
-import { AuthProvider }       from './shared/context/AuthContext';
+import Layout       from './shared/components/Layout';
+import { AuthProvider } from './shared/context/AuthContext';
 
 function LoadingScreen() {
   return (
@@ -60,9 +61,8 @@ function ProtectedRoute({ children, requiredRole }) {
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/" replace />;
   if (!user.verified) return <Navigate to="/verify-email" replace />;
-  if (requiredRole && user.role !== requiredRole) {
+  if (requiredRole && user.role !== requiredRole)
     return <Navigate to={user.role === 'FREETIMER' ? '/freetimer/home' : '/fulltimer/home'} replace />;
-  }
   return children;
 }
 
@@ -98,28 +98,29 @@ export default function App() {
             <Route path="/verification" element={<SessionRoute><VerificationPage /></SessionRoute>} />
 
             {/* ── Freetimer ── */}
-            <Route path="/freetimer/home"               element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerDashboard /></ProtectedRoute>} />
-            <Route path="/freetimer/tasks"              element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerTasksPage /></ProtectedRoute>} />
-            <Route path="/freetimer/task/:taskId"       element={<ProtectedRoute requiredRole="FREETIMER"><TaskDetailsPage /></ProtectedRoute>} />
-            <Route path="/freetimer/execution/:taskId"  element={<ProtectedRoute requiredRole="FREETIMER"><TaskExecutionPage /></ProtectedRoute>} />
-            <Route path="/freetimer/payment"            element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerPaymentPage /></ProtectedRoute>} />
-            <Route path="/freetimer/profile"            element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerProfilePage /></ProtectedRoute>} />
+            <Route path="/freetimer/home"              element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerDashboard /></ProtectedRoute>} />
+            <Route path="/freetimer/tasks"             element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerTasksPage /></ProtectedRoute>} />
+            <Route path="/freetimer/task/:taskId"      element={<ProtectedRoute requiredRole="FREETIMER"><TaskDetailsPage /></ProtectedRoute>} />
+            <Route path="/freetimer/execution/:taskId" element={<ProtectedRoute requiredRole="FREETIMER"><TaskExecutionPage /></ProtectedRoute>} />
+            <Route path="/freetimer/payment"           element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerPaymentPage /></ProtectedRoute>} />
+            <Route path="/freetimer/profile"           element={<ProtectedRoute requiredRole="FREETIMER"><FreetimerProfilePage /></ProtectedRoute>} />
 
             {/* ── Fulltimer ── */}
-            <Route path="/fulltimer/home"                    element={<ProtectedRoute requiredRole="FULLTIMER"><FulltimerDashboard /></ProtectedRoute>} />
-            <Route path="/fulltimer/post-task"               element={<ProtectedRoute requiredRole="FULLTIMER"><PostTaskPage /></ProtectedRoute>} />
-            <Route path="/fulltimer/my-tasks"                element={<ProtectedRoute requiredRole="FULLTIMER"><MyTasksPage /></ProtectedRoute>} />
-            <Route path="/fulltimer/task-history"            element={<ProtectedRoute requiredRole="FULLTIMER"><TaskHistoryPage /></ProtectedRoute>} />
-            <Route path="/fulltimer/task/:taskId/applicants" element={<ProtectedRoute requiredRole="FULLTIMER"><ApplicantsPage /></ProtectedRoute>} />
-            <Route path="/fulltimer/payment"                 element={<ProtectedRoute requiredRole="FULLTIMER"><FulltimerPaymentPage /></ProtectedRoute>} />
-            <Route path="/fulltimer/payment/add-nequi"       element={<ProtectedRoute requiredRole="FULLTIMER"><AddNequiPage /></ProtectedRoute>} />
-            <Route path="/fulltimer/payment/history"         element={<ProtectedRoute requiredRole="FULLTIMER"><PaymentHistoryPage /></ProtectedRoute>} />
-            <Route path="/fulltimer/profile"                 element={<ProtectedRoute requiredRole="FULLTIMER"><FulltimerProfilePage /></ProtectedRoute>} />
-            <Route path="/fulltimer/profile/edit"            element={<ProtectedRoute requiredRole="FULLTIMER"><EditProfilePage /></ProtectedRoute>} />
-            <Route path="/fulltimer/profile/personal-data"   element={<ProtectedRoute requiredRole="FULLTIMER"><PersonalDataPage /></ProtectedRoute>} />
-            <Route path="/fulltimer/profile/ratings"         element={<ProtectedRoute requiredRole="FULLTIMER"><RatingsPage /></ProtectedRoute>} />
-            <Route path="/fulltimer/profile/settings"        element={<ProtectedRoute requiredRole="FULLTIMER"><SettingsPage /></ProtectedRoute>} />
-            <Route path="/fulltimer/messages"                element={<ProtectedRoute requiredRole="FULLTIMER"><MessagesPage /></ProtectedRoute>} />  {/* ← nuevo */}
+            <Route path="/fulltimer/home"                   element={<ProtectedRoute requiredRole="FULLTIMER"><FulltimerDashboard /></ProtectedRoute>} />
+            <Route path="/fulltimer/post-task"              element={<ProtectedRoute requiredRole="FULLTIMER"><PostTaskPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/my-tasks"               element={<ProtectedRoute requiredRole="FULLTIMER"><MyTasksPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/task-history"           element={<ProtectedRoute requiredRole="FULLTIMER"><TaskHistoryPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/task/:taskId/applicants"element={<ProtectedRoute requiredRole="FULLTIMER"><ApplicantsPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/payment"                element={<ProtectedRoute requiredRole="FULLTIMER"><FulltimerPaymentPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/payment/add-nequi"      element={<ProtectedRoute requiredRole="FULLTIMER"><AddNequiPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/payment/history"        element={<ProtectedRoute requiredRole="FULLTIMER"><PaymentHistoryPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/profile"                element={<ProtectedRoute requiredRole="FULLTIMER"><FulltimerProfilePage /></ProtectedRoute>} />
+            <Route path="/fulltimer/profile/edit"           element={<ProtectedRoute requiredRole="FULLTIMER"><EditProfilePage /></ProtectedRoute>} />
+            <Route path="/fulltimer/profile/personal-data"  element={<ProtectedRoute requiredRole="FULLTIMER"><PersonalDataPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/profile/ratings"        element={<ProtectedRoute requiredRole="FULLTIMER"><RatingsPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/profile/settings"       element={<ProtectedRoute requiredRole="FULLTIMER"><SettingsPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/messages"               element={<ProtectedRoute requiredRole="FULLTIMER"><MessagesPage /></ProtectedRoute>} />
+            <Route path="/fulltimer/freetimer-profile"      element={<ProtectedRoute requiredRole="FULLTIMER"><FreetimeProfileViewPage /></ProtectedRoute>} /> {/* ← nuevo */}
 
             {/* ── Fallback ── */}
             <Route path="*" element={<Navigate to="/" replace />} />
