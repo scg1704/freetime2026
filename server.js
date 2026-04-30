@@ -22,15 +22,21 @@ app.use(cors({
   credentials: true
 }));
 
+app.set('trust proxy', 1);
+
 app.use(express.json());
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Proxy trust
-// Necesario para que express-rate-limit lea el IP real cuando el servidor
-// esté detrás de un proxy (Nginx, Heroku, Railway, etc.).
-// En desarrollo local no afecta nada.
-// ─────────────────────────────────────────────────────────────────────────────
-app.set('trust proxy', 1);
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // Límite de 100 peticiones por ventana
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Esta es la propiedad que soluciona el error de validación en Render:
+  validate: { xForwardedForHeader: false }, 
+});
+
+// Aplicar el limitador
+app.use(limiter);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FIX BUG 1 — Cross-Origin-Opener-Policy para Google OAuth popup
