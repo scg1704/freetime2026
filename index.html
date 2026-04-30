@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Favicon: logo de FreeTime en el tab del navegador -->
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/djhzmob44/image/upload/v1775446214/FTLOGO3-removebg-preview_j1yad7.png" />
+    <!-- Fallback para navegadores que piden específicamente favicon.ico -->
+    <link rel="shortcut icon" href="https://res.cloudinary.com/djhzmob44/image/upload/v1775446214/FTLOGO3-removebg-preview_j1yad7.png" />
+    <!-- Para dispositivos Apple (agregar a pantalla de inicio) -->
+    <link rel="apple-touch-icon" href="https://res.cloudinary.com/djhzmob44/image/upload/v1775446214/FTLOGO3-removebg-preview_j1yad7.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <script>
+      var redirect = sessionStorage.getItem('redirect');
+      if (redirect) {
+        sessionStorage.removeItem('redirect');
+        window.history.replaceState(null, null, redirect || '/');
+      }
+    </script>
+
+    <title>FreeTime - Más tiempo para ti</title>
+    <script type="module" crossorigin src="/freetime2026/assets/index-DWMZ9bcK.js"></script>
+    <link rel="stylesheet" crossorigin href="/freetime2026/assets/index-OVzm1uBZ.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script>
+      var path = window.location.pathname.replace('/nombre-de-tu-repo', '');
+      sessionStorage.setItem('redirect', path);
+      window.location.replace('/nombre-de-tu-repo/');
+    </script>
+  </head>
+</html>
