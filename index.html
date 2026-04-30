@@ -18,6 +18,14 @@
       rel="stylesheet"
     />
 
+    <script>
+      var redirect = sessionStorage.getItem('redirect');
+      if (redirect) {
+        sessionStorage.removeItem('redirect');
+        window.history.replaceState(null, null, redirect || '/');
+      }
+    </script>
+
     <title>FreeTime - Más tiempo para ti</title>
   </head>
   <body>

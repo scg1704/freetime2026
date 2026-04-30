@@ -7,9 +7,11 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
+    base: '/freetime2026/',
     plugins: [react(), tailwindcss()],
     define: {
       'process.env.API_URL': JSON.stringify(env.API_URL),

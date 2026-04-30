@@ -1,9 +1,12 @@
 {
+  "homepage": "https://scg1704.github.io/freetime2026",
   "name": "freetime",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist",
     "dev": "concurrently \"npm run dev:api\" \"npm run dev:client\"",
     "dev:api": "node server.js",
     "dev:client": "vite",
