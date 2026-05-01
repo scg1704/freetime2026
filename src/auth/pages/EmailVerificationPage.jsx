@@ -1,5 +1,5 @@
 // src/auth/pages/EmailVerificationPage.jsx
-import { useState, useRef, useEffect } from 'react';
+/* import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence }      from 'motion/react';
 import { useNavigate }                  from 'react-router-dom';
 import { useAuth }                      from '../../shared/context/AuthContext';
@@ -155,16 +155,16 @@ export default function EmailVerificationPage() {
   const codeComplete = digits.every((d) => d !== '');
   const maskedEmail  = (user?.email || '').replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + '*'.repeat(Math.max(2, b.length)) + c);
   const isTransition = status === 'transitioning';
-  const isSuccess    = status === 'success';
+  const isSuccess    = status === 'success'; */
 
   // ─────────────────────────────────────────────────────────────────────────
   // Pantalla de carga → éxito
   // ─────────────────────────────────────────────────────────────────────────
-  if (isTransition || isSuccess) {
+  /* if (isTransition || isSuccess) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 gap-10">
 
-        {/* Círculo: spinner morado → check morado */}
+        {/* Círculo: spinner morado → check morado }
         <div className="relative w-28 h-28 flex items-center justify-center">
           <AnimatePresence mode="wait">
             {isTransition && (
@@ -196,7 +196,7 @@ export default function EmailVerificationPage() {
           </AnimatePresence>
         </div>
 
-        {/* Texto y botón — solo aparecen en success */}
+        {/* Texto y botón — solo aparecen en success }
         <AnimatePresence>
           {isSuccess && (
             <motion.div
@@ -247,7 +247,7 @@ export default function EmailVerificationPage() {
         </div>
 
         <div className="space-y-6">
-          {/* Inputs */}
+          {/* Inputs }
           <div className="flex gap-2 justify-center" onPaste={handlePaste}>
             {digits.map((digit, i) => (
               <input
@@ -271,7 +271,7 @@ export default function EmailVerificationPage() {
             ))}
           </div>
 
-          {/* Error */}
+          {/* Error }
           <AnimatePresence>
             {errorMsg && (
               <motion.div
@@ -283,7 +283,7 @@ export default function EmailVerificationPage() {
             )}
           </AnimatePresence>
 
-          {/* Spinner envío inicial */}
+          {/* Spinner envío inicial }
           {!sent && sending && (
             <div className="flex items-center justify-center gap-2 text-sm text-secondary">
               <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -291,7 +291,7 @@ export default function EmailVerificationPage() {
             </div>
           )}
 
-          {/* Botón verificar */}
+          {/* Botón verificar }
           <button
             type="button"
             disabled={!codeComplete || status === 'loading' || !sent}
@@ -304,7 +304,7 @@ export default function EmailVerificationPage() {
             }
           </button>
 
-          {/* Reenviar */}
+          {/* Reenviar }
           <div className="text-center">
             {cooldown > 0 ? (
               <p className="text-xs text-secondary">
@@ -330,4 +330,4 @@ export default function EmailVerificationPage() {
       </div>
     </div>
   );
-}
+} */
