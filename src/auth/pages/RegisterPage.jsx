@@ -664,7 +664,7 @@ export default function RegisterPage() {
 
       // remember = true: new users should stay logged in
       login(data.user, true);
-      navigate('/fulltimer/dashboard');
+      navigate('/fulltimer/home');
     } catch {
       setError('Error de conexión. Intenta de nuevo.');
     } finally {
