@@ -6,7 +6,7 @@ import { useAuth } from './shared/context/AuthContext';
 import LandingPage            from './auth/pages/LandingPage';
 import LoginPage              from './auth/pages/LoginPage';
 import RegisterPage           from './auth/pages/RegisterPage';
-import EmailVerificationPage  from './auth/pages/EmailVerificationPage';
+//import EmailVerificationPage  from './auth/pages/EmailVerificationPage';
 import VerificationPage       from './auth/pages/VerificationPage';
 
 // ── Freetimer ────────────────────────────────────────────────────────────────
@@ -94,7 +94,7 @@ export default function App() {
             <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
 
             {/* ── Verificación ── */}
-            <Route path="/verify-email" element={<EmailVerifyRoute><EmailVerificationPage /></EmailVerifyRoute>} />
+            {/* <Route path="/verify-email" element={<EmailVerifyRoute><EmailVerificationPage /></EmailVerifyRoute>} /> */}
             <Route path="/verification" element={<SessionRoute><VerificationPage /></SessionRoute>} />
 
             {/* ── Freetimer ── */}
