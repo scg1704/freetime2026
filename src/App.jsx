@@ -60,7 +60,7 @@ function ProtectedRoute({ children, requiredRole }) {
   const { user, loading } = useAuth();
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/" replace />;
-  // if (!user.verified) return <Navigate to="/verify-email" replace />;
+  //if (!user.verified) return <Navigate to="/verify-email" replace />;
   if (requiredRole && user.role !== requiredRole)
     return <Navigate to={user.role === 'FREETIMER' ? '/freetimer/home' : '/fulltimer/home'} replace />;
   return children;

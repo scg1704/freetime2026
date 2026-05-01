@@ -664,7 +664,7 @@ export default function RegisterPage() {
 
       // remember = true: new users should stay logged in
       login(data.user, true);
-      navigate('/verify-email');
+      navigate('/fulltimer/dashboard');
     } catch {
       setError('Error de conexión. Intenta de nuevo.');
     } finally {
