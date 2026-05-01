@@ -650,7 +650,9 @@ export default function RegisterPage() {
         photoURL:      photo?.isGoogleUrl ? photo.preview : null,
       };
 
-      const res = await fetch('/api/auth/register', {
+      const API_URL = import.meta.env.VITE_API_URL;
+
+      const res = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -664,7 +666,7 @@ export default function RegisterPage() {
 
       // remember = true: new users should stay logged in
       login(data.user, true);
-      navigate('/fulltimer/home');
+      navigate(role === 'FREETIMER' ? '/freetimer/home' : '/fulltimer/home');
     } catch {
       setError('Error de conexión. Intenta de nuevo.');
     } finally {
