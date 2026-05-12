@@ -6,7 +6,7 @@ import { useAuth } from './shared/context/AuthContext';
 import LandingPage            from './auth/pages/LandingPage';
 import LoginPage              from './auth/pages/LoginPage';
 import RegisterPage           from './auth/pages/RegisterPage';
-//import EmailVerificationPage  from './auth/pages/EmailVerificationPage';
+import EmailVerificationPage  from './auth/pages/EmailVerificationPage';
 import VerificationPage       from './auth/pages/VerificationPage';
 
 // ── Freetimer ────────────────────────────────────────────────────────────────
@@ -50,7 +50,7 @@ function PublicRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <LoadingScreen />;
   if (user) {
-    // if (!user.verified) return <Navigate to="/verify-email" replace />;
+    if (!user.verified) return <Navigate to="/verify-email" replace />;
     return <Navigate to={user.role === 'FREETIMER' ? '/freetimer/home' : '/fulltimer/home'} replace />;
   }
   return children;
@@ -60,7 +60,7 @@ function ProtectedRoute({ children, requiredRole }) {
   const { user, loading } = useAuth();
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/" replace />;
-  //if (!user.verified) return <Navigate to="/verify-email" replace />;
+  if (!user.verified) return <Navigate to="/verify-email" replace />;
   if (requiredRole && user.role !== requiredRole)
     return <Navigate to={user.role === 'FREETIMER' ? '/freetimer/home' : '/fulltimer/home'} replace />;
   return children;
@@ -70,7 +70,7 @@ function EmailVerifyRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/" replace />;
-  //if (user.verified) return <Navigate to={user.role === 'FREETIMER' ? '/freetimer/home' : '/fulltimer/home'} replace />;
+  if (user.verified) return <Navigate to={user.role === 'FREETIMER' ? '/freetimer/home' : '/fulltimer/home'} replace />;
   return children;
 }
 
@@ -94,7 +94,7 @@ export default function App() {
             <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
 
             {/* ── Verificación ── */}
-            {/* <Route path="/verify-email" element={<EmailVerifyRoute><EmailVerificationPage /></EmailVerifyRoute>} /> */}
+            <Route path="/verify-email" element={<EmailVerifyRoute><EmailVerificationPage /></EmailVerifyRoute>} />
             <Route path="/verification" element={<SessionRoute><VerificationPage /></SessionRoute>} />
 
             {/* ── Freetimer ── */}

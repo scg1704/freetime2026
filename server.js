@@ -1,9 +1,8 @@
 // server.js
+import express        from 'express';
 import path           from 'path';
 import { fileURLToPath } from 'url';
 import dotenv         from 'dotenv';
-import express from 'express'; 
-import cors from 'cors';    
 import authRoutes     from './api/routes/auth.routes.js';
 import tasksRoutes    from './api/routes/tasks.routes.js';
 import usersRoutes    from './api/routes/users.routes.js';
@@ -13,19 +12,16 @@ dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
-const app = express();
-const PORT = process.env.PORT || 3001;
+const app        = express();
+const PORT       = process.env.PORT || 3001;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Proxy trust
+// Necesario para que express-rate-limit lea el IP real cuando el servidor
+// esté detrás de un proxy (Nginx, Heroku, Railway, etc.).
+// En desarrollo local no afecta nada.
+// ─────────────────────────────────────────────────────────────────────────────
 app.set('trust proxy', 1);
-
-app.use(cors({
-  origin: 'https://freetime-app.onrender.com',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
-}));
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FIX BUG 1 — Cross-Origin-Opener-Policy para Google OAuth popup
@@ -98,5 +94,5 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Servidor activo en puerto ${PORT}`);
+  console.log(`🚀 FreeTime API corriendo en http://localhost:${PORT}`);
 });

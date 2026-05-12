@@ -224,7 +224,7 @@ export async function register(req, res) {
       badges:         ['Principiante'],
       // Google users: email already verified by Google → skip email verification
       // Manual users: must verify email before accessing dashboard
-      verified:  true, //!!googleId
+      verified:  !!googleId,
       createdAt: new Date().toISOString(),
     };
 
